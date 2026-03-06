@@ -1,0 +1,133 @@
+# ─────────────────────────────────────────────────────────
+#  APISIX Smoke Test Job
+#  Runs inside the cluster — tests gateway, Redis, and rate limiting
+#  Usage: kubectl apply -f 07-smoke-test-job.yaml
+#         kubectl logs -f job/apisix-smoke-test -n apisix
+# ─────────────────────────────────────────────────────────
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: apisix-smoke-test
+  namespace: apisix
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: tester
+          image: curlimages/curl:8.5.0
+          env:
+            - name: ADMIN_KEY
+              value: "coderz-apisix-admin-key-2024"
+          command:
+            - sh
+            - -c
+            - |
+              ADMIN="http://apisix-admin.apisix.svc.cluster.local:9180/apisix/admin"
+              GW="http://apisix-gateway.apisix.svc.cluster.local:9080"
+              KEY="$ADMIN_KEY"
+              PASS=0
+              FAIL=0
+
+              check() {
+                LABEL=$1; EXPECTED=$2; ACTUAL=$3
+                if [ "$ACTUAL" = "$EXPECTED" ]; then
+                  echo "  PASS: $LABEL"
+                  PASS=$((PASS+1))
+                else
+                  echo "  FAIL: $LABEL — expected [$EXPECTED] got [$ACTUAL]"
+                  FAIL=$((FAIL+1))
+                fi
+              }
+
+              echo "============================================"
+              echo " APISIX Smoke Tests"
+              echo "============================================"
+
+              # ── Test 1: Admin API reachable ───────────────
+              echo ""
+              echo "Test 1: Admin API reachable"
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+                -H "X-API-KEY: $KEY" "$ADMIN/routes")
+              check "Admin API returns 200" "200" "$CODE"
+
+              # ── Test 2: Register temp upstream + route ────
+              echo ""
+              echo "Test 2: Register test route"
+              curl -s -o /dev/null -X PUT "$ADMIN/upstreams/999" \
+                -H "X-API-KEY: $KEY" -H "Content-Type: application/json" \
+                -d '{"id":"999","name":"test-upstream","type":"roundrobin","nodes":{"httpbin.org:80":1}}'
+
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+                -X PUT "$ADMIN/routes/999" \
+                -H "X-API-KEY: $KEY" -H "Content-Type: application/json" \
+                -d '{
+                  "id":"999",
+                  "name":"smoke-test-route",
+                  "uri":"/smoke/*",
+                  "upstream_id":"999",
+                  "plugins":{
+                    "limit-count":{
+                      "count":5,
+                      "time_window":60,
+                      "rejected_code":429,
+                      "policy":"redis",
+                      "redis_host":"redis-service.apisix.svc.cluster.local",
+                      "redis_port":6379,
+                      "key":"remote_addr"
+                    },
+                    "response-rewrite":{
+                      "headers":{"set":{"X-Gateway":"APISIX","X-Test":"smoke"}}
+                    }
+                  }
+                }')
+              check "Route registered (200 or 201)" "20" "$(echo $CODE | cut -c1-2)"
+
+              # ── Test 3: Proxy request works ───────────────
+              echo ""
+              echo "Test 3: Proxy request through gateway"
+              sleep 2
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" "$GW/smoke/get")
+              check "Proxy request returns 200" "200" "$CODE"
+
+              # ── Test 4: X-Gateway header injected ─────────
+              echo ""
+              echo "Test 4: Custom header X-Gateway injected"
+              HEADER=$(curl -s -I "$GW/smoke/get" | grep -i "x-gateway:" | tr -d '\r\n ')
+              check "X-Gateway: APISIX header present" "X-Gateway:APISIX" "$HEADER"
+
+              # ── Test 5: Rate limit triggers ───────────────
+              echo ""
+              echo "Test 5: Rate limiting (5 req limit)"
+              HITS429=0
+              for i in $(seq 1 8); do
+                CODE=$(curl -s -o /dev/null -w "%{http_code}" "$GW/smoke/get")
+                [ "$CODE" = "429" ] && HITS429=$((HITS429+1))
+              done
+              [ "$HITS429" -gt "0" ] \
+                && { echo "  PASS: rate limiter fired ($HITS429 × 429)"; PASS=$((PASS+1)); } \
+                || { echo "  FAIL: no 429s triggered after 8 requests"; FAIL=$((FAIL+1)); }
+
+              # ── Test 6: /cache/keys route works ──────────
+              echo ""
+              echo "Test 6: Cache inspector endpoint"
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" "$GW/cache/keys")
+              check "Cache inspector returns 200" "200" "$CODE"
+
+              # ── Test 7: Metrics endpoint live ─────────────
+              echo ""
+              echo "Test 7: Prometheus metrics endpoint"
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+                "http://apisix-metrics.apisix.svc.cluster.local:9091/apisix/prometheus/metrics")
+              check "Metrics endpoint returns 200" "200" "$CODE"
+
+              # ── Cleanup ───────────────────────────────────
+              curl -s -o /dev/null -X DELETE "$ADMIN/routes/999" -H "X-API-KEY: $KEY"
+              curl -s -o /dev/null -X DELETE "$ADMIN/upstreams/999" -H "X-API-KEY: $KEY"
+
+              echo ""
+              echo "============================================"
+              echo " Results: $PASS passed, $FAIL failed"
+              echo "============================================"
+              [ "$FAIL" -eq "0" ] && exit 0 || exit 1
