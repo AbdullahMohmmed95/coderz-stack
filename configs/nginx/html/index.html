@@ -3,18 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Coderz — Infrastructure Dashboard</title>
+  <title>Coderz Stack — Infrastructure Portal</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0d1117;
-      --surface:   #161b22;
-      --border:    #30363d;
-      --text:      #e6edf3;
-      --muted:     #8b949e;
-      --accent:    #58a6ff;
-      --green:     #3fb950;
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --surface2: #1c2128;
+      --border:   #30363d;
+      --text:     #e6edf3;
+      --muted:    #8b949e;
+      --accent:   #58a6ff;
+      --green:    #3fb950;
+      --purple:   #bc8cff;
+      --orange:   #f0883e;
+      --yellow:   #e3b341;
+      --red:      #f85149;
     }
 
     body {
@@ -22,408 +27,838 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      padding: 40px 20px 60px;
     }
 
-    .container { max-width: 1100px; margin: 0 auto; }
-
-    /* ── Header ──────────────────────────────────────────── */
-    header {
-      text-align: center;
-      margin-bottom: 48px;
-      padding: 32px 24px;
-      background: linear-gradient(135deg, rgba(88,166,255,0.06) 0%, rgba(63,185,80,0.04) 100%);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-    }
-    header h1 { font-size: 2.2rem; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
-    header p  { margin-top: 8px; color: var(--muted); font-size: 0.95rem; }
-    .badge {
-      display: inline-block; margin-top: 14px; padding: 4px 14px;
-      border: 1px solid var(--green); border-radius: 20px;
-      font-size: 0.8rem; color: var(--green); background: rgba(63,185,80,0.1);
-    }
-    .dot { display: inline-block; width: 8px; height: 8px; background: var(--green);
-           border-radius: 50%; margin-right: 6px; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-    /* ── Quick-access strip ──────────────────────────────── */
-    .quickbar {
-      display: flex; flex-wrap: wrap; gap: 8px;
-      justify-content: center;
-      margin: 20px 0 0;
-    }
-    .quickbar a {
-      display: inline-block; padding: 5px 14px;
-      border: 1px solid var(--border); border-radius: 20px;
-      font-size: 0.78rem; color: var(--muted); text-decoration: none;
-      background: rgba(255,255,255,0.03);
-      transition: border-color .15s, color .15s;
-    }
-    .quickbar a:hover { border-color: var(--accent); color: var(--accent); }
-
-    /* ── Section labels ──────────────────────────────────── */
-    .section-label {
-      font-size: 0.75rem; font-weight: 600; letter-spacing: 1px;
-      text-transform: uppercase; color: var(--muted);
-      margin: 36px 0 14px; padding: 8px 0 8px 12px;
+    /* ── TOP NAV ────────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(13,17,23,0.92);
+      backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
-      border-left: 3px solid var(--section-color, var(--accent));
+      padding: 0 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 56px;
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 1.1rem; color: var(--text);
+      text-decoration: none;
+    }
+    .nav-brand .logo {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: linear-gradient(135deg, #58a6ff, #3fb950);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .nav-links {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .nav-links a {
+      padding: 5px 12px; border-radius: 6px;
+      font-size: 0.82rem; color: var(--muted); text-decoration: none;
+      transition: background .15s, color .15s;
+    }
+    .nav-links a:hover { background: var(--surface2); color: var(--text); }
+    .nav-links a.active { background: var(--surface2); color: var(--accent); }
+    .nav-docs {
       display: flex; align-items: center; gap: 8px;
     }
+    .btn-docs {
+      padding: 6px 16px; border-radius: 6px;
+      background: var(--accent); color: #0d1117;
+      font-size: 0.82rem; font-weight: 600; text-decoration: none;
+      transition: opacity .15s;
+    }
+    .btn-docs:hover { opacity: 0.85; }
+    .btn-gh {
+      padding: 6px 12px; border-radius: 6px;
+      border: 1px solid var(--border); color: var(--muted);
+      font-size: 0.82rem; text-decoration: none;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-gh:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* ── Grid & Cards ────────────────────────────────────── */
+    /* ── HERO ────────────────────────────────────────────────── */
+    .hero {
+      padding: 72px 32px 56px;
+      text-align: center;
+      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(88,166,255,0.1) 0%, transparent 60%);
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 20px;
+      border: 1px solid rgba(88,166,255,0.3);
+      background: rgba(88,166,255,0.07);
+      font-size: 0.75rem; color: var(--accent); font-weight: 500;
+      margin-bottom: 22px;
+    }
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800; letter-spacing: -1.5px;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #e6edf3 30%, #8b949e);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+    .hero p {
+      font-size: 1.05rem; color: var(--muted); max-width: 560px; margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+    .hero-actions {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 48px;
+    }
+    .btn-primary {
+      padding: 10px 24px; border-radius: 8px;
+      background: var(--accent); color: #0d1117;
+      font-weight: 600; font-size: 0.9rem; text-decoration: none;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-secondary {
+      padding: 10px 24px; border-radius: 8px;
+      border: 1px solid var(--border); color: var(--text);
+      font-size: 0.9rem; text-decoration: none;
+      transition: border-color .15s, transform .1s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+    /* ── STATS BAR ───────────────────────────────────────────── */
+    .stats-bar {
+      display: flex; justify-content: center; flex-wrap: wrap;
+      gap: 0; border: 1px solid var(--border); border-radius: 12px;
+      background: var(--surface); max-width: 700px; margin: 0 auto;
+      overflow: hidden;
+    }
+    .stat {
+      flex: 1; min-width: 120px; padding: 16px 20px; text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-val { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+    .stat-label { font-size: 0.72rem; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── MAIN LAYOUT ─────────────────────────────────────────── */
+    .main { max-width: 1200px; margin: 0 auto; padding: 48px 24px 80px; }
+
+    /* ── QUICK ACCESS ────────────────────────────────────────── */
+    .quick-access {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 48px; justify-content: center;
+    }
+    .quick-access a {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 20px;
+      border: 1px solid var(--border); font-size: 0.8rem; color: var(--muted);
+      text-decoration: none; background: var(--surface);
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .quick-access a:hover { border-color: var(--accent); color: var(--text); background: var(--surface2); }
+    .quick-access a span { font-size: 1rem; }
+
+    /* ── SECTION HEADER ──────────────────────────────────────── */
+    .section-head {
+      display: flex; align-items: center; gap: 10px;
+      margin: 0 0 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--section-bg, rgba(88,166,255,0.12));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .section-title { font-weight: 700; font-size: 1rem; }
+    .section-count {
+      margin-left: auto; font-size: 0.75rem; color: var(--muted);
+      background: var(--surface2); padding: 2px 8px; border-radius: 10px;
+    }
+    .section-wrap { margin-bottom: 44px; }
+
+    /* ── GRID ────────────────────────────────────────────────── */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 12px;
+    }
+    .grid-3 {
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     }
 
+    /* ── CARD ────────────────────────────────────────────────── */
     a.card {
-      display: block; padding: 22px 18px;
+      display: block; padding: 20px 18px;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: 10px; text-decoration: none; color: var(--text);
-      transition: border-color .15s ease, background .15s ease, transform .1s ease;
+      transition: border-color .15s, background .15s, transform .1s;
       position: relative; overflow: hidden;
     }
     a.card:hover {
-      border-color: var(--accent);
-      background: #1c2128;
+      border-color: var(--card-accent, var(--accent));
+      background: var(--surface2);
       transform: translateY(-2px);
     }
+    a.card::after {
+      content: "↗"; position: absolute; top: 14px; right: 14px;
+      font-size: 0.8rem; color: var(--muted);
+      opacity: 0; transition: opacity .15s;
+    }
+    a.card:hover::after { opacity: 1; }
     a.card::before {
-      content: "";
-      position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: var(--card-color, var(--accent));
-      opacity: 0;
-      transition: opacity .15s ease;
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--card-accent, var(--accent)); opacity: 0;
+      transition: opacity .15s;
     }
     a.card:hover::before { opacity: 1; }
 
-    .card-icon  { font-size: 1.8rem; margin-bottom: 10px; }
-    .card-name  { font-weight: 600; font-size: 1rem; margin-bottom: 4px; }
-    .card-desc  { font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
-    .card-cred  {
-      font-size: 0.72rem; color: var(--green);
-      margin-top: 10px; padding: 4px 8px;
-      background: rgba(63,185,80,0.08); border-radius: 4px;
+    .card-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .card-emoji {
+      width: 38px; height: 38px; border-radius: 8px; flex-shrink: 0;
+      background: var(--card-icon-bg, rgba(88,166,255,0.1));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+    .card-meta { flex: 1; min-width: 0; }
+    .card-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 2px; }
+    .card-port {
+      font-size: 0.7rem; color: var(--muted);
       font-family: "SFMono-Regular", Consolas, monospace;
     }
-    .card-port  {
-      position: absolute; top: 14px; right: 14px;
-      font-size: 0.7rem; color: var(--muted);
-      font-family: monospace;
+    .card-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.45; }
+    .card-cred {
+      margin-top: 10px; font-size: 0.72rem; color: var(--green);
+      background: rgba(63,185,80,0.08); border-radius: 5px;
+      padding: 4px 8px; font-family: monospace; display: inline-block;
     }
-
-    /* ── NEW badge ───────────────────────────────────────── */
-    .badge-new {
-      position: absolute; top: 14px; left: 14px;
-      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.5px;
-      color: #fff; background: var(--accent);
+    .badge-tag {
+      display: inline-block; font-size: 0.62rem; font-weight: 700;
       padding: 2px 6px; border-radius: 4px; text-transform: uppercase;
+      letter-spacing: 0.4px; margin-bottom: 6px;
+    }
+    .tag-new  { background: var(--accent); color: #0d1117; }
+    .tag-k8s  { background: #326ce5; color: #fff; }
+    .tag-live { background: var(--green); color: #0d1117; }
+    .tag-api  { background: var(--purple); color: #0d1117; }
+
+    /* ── FEATURED (wide) CARD ────────────────────────────────── */
+    a.card-featured {
+      grid-column: span 2;
+      display: flex; gap: 20px; align-items: flex-start;
+      padding: 24px;
+    }
+    @media (max-width: 600px) { a.card-featured { grid-column: span 1; flex-direction: column; } }
+    .card-featured .card-emoji { width: 52px; height: 52px; font-size: 1.6rem; }
+    .card-featured .card-name { font-size: 1.1rem; }
+    .card-featured .card-desc { font-size: 0.85rem; }
+    .feat-links {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px;
+    }
+    .feat-links a {
+      font-size: 0.75rem; padding: 4px 10px; border-radius: 5px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); text-decoration: none;
+      transition: border-color .15s, color .15s;
+    }
+    .feat-links a:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── DIVIDER ─────────────────────────────────────────────── */
+    .divider {
+      border: none; border-top: 1px solid var(--border);
+      margin: 48px 0;
     }
 
-    /* ── Footer ──────────────────────────────────────────── */
+    /* ── FOOTER ──────────────────────────────────────────────── */
     footer {
-      margin-top: 56px; text-align: center;
+      border-top: 1px solid var(--border);
+      padding: 32px 24px; text-align: center;
       font-size: 0.8rem; color: var(--muted);
-      border-top: 1px solid var(--border); padding-top: 24px;
     }
-    footer code {
-      font-family: monospace; background: var(--surface);
-      padding: 2px 6px; border-radius: 4px;
-      font-size: 0.78rem; color: var(--accent);
+    footer .footer-links {
+      display: flex; justify-content: center; gap: 24px; flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    footer a { color: var(--muted); text-decoration: none; transition: color .15s; }
+    footer a:hover { color: var(--accent); }
+
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .hero { padding: 48px 20px 40px; }
+      .main { padding: 32px 16px 60px; }
     }
   </style>
 </head>
 <body>
-<div class="container">
 
-  <header>
-    <h1>Coderz Infrastructure</h1>
-    <p>All services running in Docker &mdash; Server: <strong>109.199.120.120</strong></p>
-    <div class="badge"><span class="dot"></span>Stack Online</div>
-    <div class="quickbar">
-      <a href="http://109.199.120.120:3000" target="_blank">&#128202; Grafana</a>
-      <a href="http://109.199.120.120:4200" target="_blank">&#128640; Prefect</a>
-      <a href="http://109.199.120.120:5601" target="_blank">&#128269; Kibana</a>
-      <a href="http://109.199.120.120:9090" target="_blank">&#128200; Prometheus</a>
-      <a href="http://109.199.120.120:8888/swagger" target="_blank">&#128196; API Docs</a>
-      <a href="http://109.199.120.120:9000" target="_blank">&#9889; k6 Runner</a>
-      <a href="http://109.199.120.120:3000/d/k3s-overview" target="_blank">&#9096; k3s</a>
-      <a href="http://109.199.120.120:5080" target="_blank">&#128466; pgAdmin</a>
-      <a href="http://109.199.120.120:5200/swagger" target="_blank" style="border-color:#3fb950;color:#3fb950">&#128722; eShop</a>
+<!-- ── NAV ─────────────────────────────────────────────────────── -->
+<nav>
+  <a href="/" class="nav-brand">
+    <div class="logo">⚡</div>
+    Coderz Stack
+  </a>
+  <div class="nav-links">
+    <a href="#monitoring" class="active">Monitoring</a>
+    <a href="#gateway">Gateway</a>
+    <a href="#logging">Logging</a>
+    <a href="#apps">APIs</a>
+    <a href="#k8s">Kubernetes</a>
+    <a href="#testing">Testing</a>
+  </div>
+  <div class="nav-docs">
+    <a href="https://github.com/AbdullahMohmmed95/coderz-stack" target="_blank" class="btn-gh">⑂ GitHub</a>
+    <a href="http://109.199.120.120:3000" target="_blank" class="btn-docs">📊 Grafana</a>
+  </div>
+</nav>
+
+<!-- ── HERO ─────────────────────────────────────────────────────── -->
+<div class="hero">
+  <div class="hero-tag">
+    <span class="live-dot"></span>
+    All services online · 109.199.120.120
+  </div>
+  <h1>Coderz Infrastructure<br>Stack</h1>
+  <p>A fully self-hosted, production-grade platform — API gateway, observability, logging, orchestration, and Kubernetes in one place.</p>
+  <div class="hero-actions">
+    <a href="http://109.199.120.120:3000" target="_blank" class="btn-primary">📊 Open Grafana</a>
+    <a href="http://109.199.120.120:30900" target="_blank" class="btn-primary" style="background:var(--green)">⚡ APISIX Dashboard</a>
+    <a href="https://coderz-docs.mintlify.app" target="_blank" class="btn-secondary">📖 Documentation</a>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-val">20+</div>
+      <div class="stat-label">Services</div>
     </div>
-  </header>
-
-  <!-- Monitoring & Metrics -->
-  <div class="section-label" style="--section-color:#f46800">Monitoring &amp; Metrics</div>
-  <div class="grid">
-
-    <a class="card" href="http://109.199.120.120:3000" target="_blank" style="--card-color:#f46800">
-      <span class="card-port">:3000</span>
-      <div class="card-icon">&#128202;</div>
-      <div class="card-name">Grafana</div>
-      <div class="card-desc">Metrics dashboards, container monitoring, and log viewer</div>
-      <div class="card-cred">admin / coderz123</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:9090" target="_blank" style="--card-color:#e6522c">
-      <span class="card-port">:9090</span>
-      <div class="card-icon">&#128200;</div>
-      <div class="card-name">Prometheus</div>
-      <div class="card-desc">Metrics collection &amp; alerting rules engine</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:9100/metrics" target="_blank" style="--card-color:#3fb950">
-      <span class="card-port">:9100</span>
-      <div class="card-icon">&#128187;</div>
-      <div class="card-name">Node Exporter</div>
-      <div class="card-desc">Host system metrics: CPU, RAM, Disk, Network</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:8080" target="_blank" style="--card-color:#2496ed">
-      <span class="card-port">:8080</span>
-      <div class="card-icon">&#128051;</div>
-      <div class="card-name">cAdvisor</div>
-      <div class="card-desc">Docker container resource usage &amp; performance metrics</div>
-    </a>
-
+    <div class="stat">
+      <div class="stat-val" style="color:var(--green)">99.9%</div>
+      <div class="stat-label">Uptime</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:var(--purple)">k3s</div>
+      <div class="stat-label">Kubernetes</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:var(--orange)">$0</div>
+      <div class="stat-label">SaaS Cost</div>
+    </div>
   </div>
-
-  <!-- Workflow Orchestration -->
-  <div class="section-label" style="--section-color:#bc8cff">Workflow Orchestration</div>
-  <div class="grid">
-
-    <a class="card" href="http://109.199.120.120:4200" target="_blank" style="--card-color:#bc8cff">
-      <span class="card-port">:4200</span>
-      <div class="card-icon">&#128640;</div>
-      <div class="card-name">Prefect</div>
-      <div class="card-desc">Workflow orchestration &mdash; cron jobs, flow runs, deployments &amp; scheduling</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:3000/d/prefect-overview" target="_blank" style="--card-color:#9b5de5">
-      <span class="card-port">:3000</span>
-      <span class="badge-new">New</span>
-      <div class="card-icon">&#128293;</div>
-      <div class="card-name">Prefect Flows</div>
-      <div class="card-desc">Grafana: completions, failures, email alerts &amp; live worker logs</div>
-    </a>
-
-  </div>
-
-  <!-- Kubernetes (k3s) -->
-  <div class="section-label" style="--section-color:#326ce5">Kubernetes (k3s)</div>
-  <div class="grid">
-
-    <a class="card" href="http://109.199.120.120:3000/d/k3s-overview" target="_blank" style="--card-color:#326ce5">
-      <span class="card-port">:3000</span>
-      <div class="card-icon">&#9096;</div>
-      <div class="card-name">k3s Cluster Overview</div>
-      <div class="card-desc">Grafana: pods, deployments, nodes &amp; resource usage via kube-state-metrics</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:9090/targets" target="_blank" style="--card-color:#4a90e2">
-      <span class="card-port">:9090</span>
-      <div class="card-icon">&#127919;</div>
-      <div class="card-name">k8s Scrape Targets</div>
-      <div class="card-desc">Prometheus: kube-state-metrics, k3s API server &amp; node scrape status</div>
-    </a>
-
-  </div>
-
-  <!-- Log Management -->
-  <div class="section-label" style="--section-color:#00bfb3">Log Management</div>
-  <div class="grid">
-
-    <a class="card" href="http://109.199.120.120:5601" target="_blank" style="--card-color:#00bfb3">
-      <span class="card-port">:5601</span>
-      <div class="card-icon">&#128269;</div>
-      <div class="card-name">Kibana</div>
-      <div class="card-desc">ELK stack log search, dashboards &amp; analytics</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:3100" target="_blank" style="--card-color:#f7c948">
-      <span class="card-port">:3100</span>
-      <div class="card-icon">&#128203;</div>
-      <div class="card-name">Loki</div>
-      <div class="card-desc">Log aggregation for Grafana &mdash; query with LogQL</div>
-    </a>
-
-  </div>
-
-  <!-- Search & Storage -->
-  <div class="section-label" style="--section-color:#ffa657">Search &amp; Storage</div>
-  <div class="grid">
-
-    <a class="card" href="http://109.199.120.120:9200" target="_blank" style="--card-color:#ffa657">
-      <span class="card-port">:9200</span>
-      <div class="card-icon">&#9889;</div>
-      <div class="card-name">Elasticsearch</div>
-      <div class="card-desc">Full-text search &amp; analytics engine (ELK backend)</div>
-    </a>
-
-  </div>
-
-  <!-- API Gateway -->
-  <div class="section-label" style="--section-color:#f6c90e">&#127760; API Gateway (port 80)</div>
-  <div class="grid">
-
-    <a class="card" href="http://109.199.120.120/dotnet/api/health" target="_blank" style="--card-color:#512bd4">
-      <span class="card-port">/dotnet/api/...</span>
-      <span class="badge-new">Gateway</span>
-      <div class="card-icon">&#9881;&#65039;</div>
-      <div class="card-name">.NET API via Gateway</div>
-      <div class="card-desc">Coderz .NET API routed through nginx &mdash; no port needed from outside</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120/eshop/api/health" target="_blank" style="--card-color:#3fb950">
-      <span class="card-port">/eshop/api/...</span>
-      <span class="badge-new">Gateway</span>
-      <div class="card-icon">&#128722;</div>
-      <div class="card-name">eShop API via Gateway</div>
-      <div class="card-desc">eShop REST API routed through nginx &mdash; products, cart, orders, auth</div>
-    </a>
-
-  </div>
-
-  <!-- Applications -->
-  <div class="section-label" style="--section-color:#58a6ff">Applications (Direct Ports)</div>
-  <div class="grid">
-
-    <a class="card" href="http://109.199.120.120:8888" target="_blank" style="--card-color:#58a6ff">
-      <span class="card-port">:8888</span>
-      <div class="card-icon">&#127760;</div>
-      <div class="card-name">Coderz Web API</div>
-      <div class="card-desc">REST API with Prometheus metrics &mdash; users, products, orders</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:8888/swagger" target="_blank" style="--card-color:#2ea043">
-      <span class="card-port">:8888</span>
-      <div class="card-icon">&#128196;</div>
-      <div class="card-name">API Swagger UI</div>
-      <div class="card-desc">Interactive OpenAPI documentation for all endpoints</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:3000/d/coderz-webapp" target="_blank" style="--card-color:#e8702a">
-      <span class="card-port">:3000</span>
-      <div class="card-icon">&#128202;</div>
-      <div class="card-name">API Monitoring</div>
-      <div class="card-desc">Grafana: req/s, latency percentiles, error rate, endpoint breakdown</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:5050" target="_blank" style="--card-color:#512bd4">
-      <span class="card-port">:5050</span>
-      <div class="card-icon">&#9881;&#65039;</div>
-      <div class="card-name">Coderz .NET API</div>
-      <div class="card-desc">ASP.NET Core 8 Web + API + PostgreSQL &mdash; items CRUD, request logging</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:5050/swagger" target="_blank" style="--card-color:#7b2ff7">
-      <span class="card-port">:5050/swagger</span>
-      <div class="card-icon">&#128203;</div>
-      <div class="card-name">API Swagger (.NET)</div>
-      <div class="card-desc">Interactive .NET API documentation &mdash; try items, logs, health endpoints</div>
-    </a>
-
-  </div>
-
-  <!-- Database Admin -->
-  <div class="section-label" style="--section-color:#336791">Database Admin</div>
-  <div class="grid">
-
-    <a class="card" href="http://109.199.120.120:5080" target="_blank" style="--card-color:#336791">
-      <span class="card-port">:5080</span>
-      <span class="badge-new">New</span>
-      <div class="card-icon">&#128466;</div>
-      <div class="card-name">pgAdmin 4</div>
-      <div class="card-desc">PostgreSQL web UI &mdash; browse Items &amp; RequestLogs tables, run SQL queries</div>
-      <div class="card-cred">admin@coderz.dev / coderz123</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:5433" target="_blank" style="--card-color:#699eca">
-      <span class="card-port">:5433</span>
-      <div class="card-icon">&#128424;</div>
-      <div class="card-name">Coderz API DB</div>
-      <div class="card-desc">PostgreSQL 15 &mdash; direct connection (psql / DBeaver / TablePlus)</div>
-      <div class="card-cred">coderapi / coderapi_2024</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:3000/d/dotnet-api" target="_blank" style="--card-color:#512bd4">
-      <span class="card-port">:3000</span>
-      <div class="card-icon">&#128200;</div>
-      <div class="card-name">DB Request Logs</div>
-      <div class="card-desc">Grafana: live table of stored requests, error analysis &amp; top endpoints from DB</div>
-    </a>
-
-  </div>
-
-  <!-- eShop -->
-  <div class="section-label" style="--section-color:#3fb950">&#128722; eShop API</div>
-  <div class="grid">
-
-    <a class="card" href="http://109.199.120.120:5200/swagger" target="_blank" style="--card-color:#3fb950">
-      <span class="card-port">:5200/swagger</span>
-      <span class="badge-new">New</span>
-      <div class="card-icon">&#128722;</div>
-      <div class="card-name">eShop API</div>
-      <div class="card-desc">ASP.NET Core 8 &mdash; Products, Cart, Orders, JWT Auth</div>
-    </a>
-
-    <a class="card" href="https://109.199.120.120/eshop/swagger" target="_blank" style="--card-color:#2ea043">
-      <span class="card-port">:443/eshop</span>
-      <div class="card-icon">&#128274;</div>
-      <div class="card-name">eShop (HTTPS)</div>
-      <div class="card-desc">Same API via HTTPS &mdash; self-signed cert (accept browser warning)</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:3000/d/coderz-eshop" target="_blank" style="--card-color:#f6c90e">
-      <span class="card-port">:3000</span>
-      <div class="card-icon">&#128201;</div>
-      <div class="card-name">eShop Dashboard</div>
-      <div class="card-desc">Grafana: req/s, latency, error rate, k6 results, live logs</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:9000" target="_blank" style="--card-color:#58a6ff">
-      <span class="card-port">:9000</span>
-      <div class="card-icon">&#9889;</div>
-      <div class="card-name">k6 eShop Tests</div>
-      <div class="card-desc">Browse, Auth, Cart Flow, Order Flow &amp; Stress scenarios</div>
-    </a>
-
-  </div>
-
-  <!-- Load Testing -->
-  <div class="section-label" style="--section-color:#f6c90e">Load Testing</div>
-  <div class="grid">
-
-    <a class="card" href="http://109.199.120.120:9000" target="_blank" style="--card-color:#f6c90e">
-      <span class="card-port">:9000</span>
-      <div class="card-icon">&#9889;</div>
-      <div class="card-name">k6 Runner</div>
-      <div class="card-desc">Run load tests from the browser &mdash; choose VUs, duration, scenario</div>
-    </a>
-
-    <a class="card" href="http://109.199.120.120:3000/d/k6-results" target="_blank" style="--card-color:#bc8cff">
-      <span class="card-port">:3000</span>
-      <div class="card-icon">&#128200;</div>
-      <div class="card-name">k6 Results</div>
-      <div class="card-desc">Grafana: VUs, req/s, p50/p95/p99 latency, failure rate live</div>
-    </a>
-
-  </div>
-
-  <footer>
-    <p>Stack managed with Docker Compose &mdash; config at <code>/opt/coderz</code></p>
-    <p style="margin-top:8px">
-      Grafana dashboards: <strong>Stack Home</strong> &bull;
-      <strong>Server Overview</strong> &bull; <strong>Docker Containers</strong> &bull;
-      <strong>Container Logs</strong> &bull; <strong>k3s Overview</strong> &bull;
-      <strong>Web App API</strong> &bull; <strong>k6 Load Tests</strong> &bull;
-      <strong>.NET API Full Stack</strong> &bull; <strong>Prefect Flows</strong> &bull; <strong>DB Request Logs</strong>
-    </p>
-  </footer>
-
 </div>
+
+<!-- ── MAIN ──────────────────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- Quick Access -->
+  <div class="quick-access">
+    <a href="http://109.199.120.120:3000" target="_blank"><span>📊</span> Grafana</a>
+    <a href="http://109.199.120.120:30900" target="_blank"><span>⚡</span> APISIX UI</a>
+    <a href="https://coderz-docs.mintlify.app" target="_blank"><span>📖</span> Docs</a>
+    <a href="http://109.199.120.120:4200" target="_blank"><span>🚀</span> Prefect</a>
+    <a href="http://109.199.120.120:5601" target="_blank"><span>🔍</span> Kibana</a>
+    <a href="http://109.199.120.120:9000" target="_blank"><span>⚡</span> k6</a>
+    <a href="http://109.199.120.120:5080" target="_blank"><span>🗄</span> pgAdmin</a>
+    <a href="http://109.199.120.120:5200/swagger" target="_blank"><span>🛒</span> eShop API</a>
+    <a href="http://109.199.120.120:9090" target="_blank"><span>📈</span> Prometheus</a>
+    <a href="http://109.199.120.120:30180/apisix/admin/routes" target="_blank"><span>🔧</span> Admin API</a>
+  </div>
+
+  <!-- ── API GATEWAY (APISIX) ──────────────────────────────────── -->
+  <div id="gateway" class="section-wrap">
+    <div class="section-head">
+      <div class="section-icon" style="--section-bg:rgba(230,179,65,0.12)">⚡</div>
+      <span class="section-title">API Gateway — Apache APISIX</span>
+      <span class="section-count">4 services</span>
+    </div>
+    <div class="grid">
+
+      <a class="card card-featured" href="http://109.199.120.120:30900" target="_blank"
+         style="--card-accent:#e3b341; --card-icon-bg:rgba(230,179,65,0.12)">
+        <div class="card-emoji">🖥️</div>
+        <div class="card-meta">
+          <span class="badge-tag tag-new">UI Dashboard</span>
+          <div class="card-name">APISIX Dashboard</div>
+          <div class="card-port">:30900 (NodePort)</div>
+          <div class="card-desc">Visual UI to manage routes, upstreams, consumers, plugins and SSL certs — no kubectl needed. Changes apply instantly.</div>
+          <div class="feat-links">
+            <a href="http://109.199.120.120:30900" target="_blank">Open Dashboard</a>
+            <a href="http://109.199.120.120:30080/cache/keys" target="_blank">Cache Inspector</a>
+            <a href="http://109.199.120.120:30091/apisix/prometheus/metrics" target="_blank">Metrics</a>
+          </div>
+          <div class="card-cred">admin / coderz123</div>
+        </div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:30080" target="_blank"
+         style="--card-accent:#e3b341; --card-icon-bg:rgba(230,179,65,0.12)">
+        <span class="badge-tag tag-k8s">k3s</span>
+        <div class="card-top">
+          <div class="card-emoji">🌐</div>
+          <div class="card-meta">
+            <div class="card-name">APISIX Gateway</div>
+            <div class="card-port">:30080 — all API traffic</div>
+          </div>
+        </div>
+        <div class="card-desc">All routes proxied with Redis caching + rate limiting. Cache HIT returns in &lt;1ms, survives upstream downtime.</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:30180/apisix/admin/routes" target="_blank"
+         style="--card-accent:#bc8cff; --card-icon-bg:rgba(188,140,255,0.1)">
+        <span class="badge-tag tag-api">Admin API</span>
+        <div class="card-top">
+          <div class="card-emoji">🔧</div>
+          <div class="card-meta">
+            <div class="card-name">APISIX Admin API</div>
+            <div class="card-port">:30180 — REST config</div>
+          </div>
+        </div>
+        <div class="card-desc">Register routes, upstreams, and plugins at runtime with zero restarts. Admin key required.</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:30080/cache/keys" target="_blank"
+         style="--card-accent:#3fb950; --card-icon-bg:rgba(63,185,80,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">⚡</div>
+          <div class="card-meta">
+            <div class="card-name">Redis Cache Inspector</div>
+            <div class="card-port">GET /cache/keys</div>
+          </div>
+        </div>
+        <div class="card-desc">Live view of all cached API responses in Redis — key names, TTL remaining, and total cached count.</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── DOCUMENTATION ─────────────────────────────────────────── -->
+  <div class="section-wrap">
+    <div class="section-head">
+      <div class="section-icon" style="--section-bg:rgba(88,166,255,0.12)">📖</div>
+      <span class="section-title">Documentation</span>
+      <span class="section-count">1 service</span>
+    </div>
+    <div class="grid grid-3">
+
+      <a class="card card-featured" href="https://coderz-docs.mintlify.app" target="_blank"
+         style="--card-accent:#58a6ff; --card-icon-bg:rgba(88,166,255,0.12)">
+        <div class="card-emoji">📖</div>
+        <div class="card-meta">
+          <span class="badge-tag tag-live">Live</span>
+          <div class="card-name">Coderz Stack Docs</div>
+          <div class="card-port">Powered by Mintlify</div>
+          <div class="card-desc">Full documentation covering every service — architecture, setup guides, API references, Kubernetes manifests, test cases, and cost analysis.</div>
+          <div class="feat-links">
+            <a href="https://coderz-docs.mintlify.app" target="_blank">Home</a>
+            <a href="https://coderz-docs.mintlify.app/apis/apisix-k8s" target="_blank">APISIX Guide</a>
+            <a href="https://coderz-docs.mintlify.app/architecture" target="_blank">Architecture</a>
+            <a href="https://coderz-docs.mintlify.app/cost-savings" target="_blank">Cost Savings</a>
+          </div>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── MONITORING ─────────────────────────────────────────────── -->
+  <div id="monitoring" class="section-wrap">
+    <div class="section-head">
+      <div class="section-icon" style="--section-bg:rgba(240,136,62,0.12)">📊</div>
+      <span class="section-title">Monitoring &amp; Metrics</span>
+      <span class="section-count">4 services</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="http://109.199.120.120:3000" target="_blank"
+         style="--card-accent:#f46800; --card-icon-bg:rgba(244,104,0,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">📊</div>
+          <div class="card-meta">
+            <div class="card-name">Grafana</div>
+            <div class="card-port">:3000</div>
+          </div>
+        </div>
+        <div class="card-desc">10+ dashboards — host, containers, APIs, k3s, k6 results, Prefect flows, DB logs</div>
+        <div class="card-cred">admin / coderz123</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:9090" target="_blank"
+         style="--card-accent:#e6522c; --card-icon-bg:rgba(230,82,44,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">📈</div>
+          <div class="card-meta">
+            <div class="card-name">Prometheus</div>
+            <div class="card-port">:9090</div>
+          </div>
+        </div>
+        <div class="card-desc">Metrics collection, alerting rules, scrape targets for all services</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:9100/metrics" target="_blank"
+         style="--card-accent:#3fb950; --card-icon-bg:rgba(63,185,80,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">🖥️</div>
+          <div class="card-meta">
+            <div class="card-name">Node Exporter</div>
+            <div class="card-port">:9100</div>
+          </div>
+        </div>
+        <div class="card-desc">Host metrics — CPU, RAM, disk I/O, network bandwidth</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:8080" target="_blank"
+         style="--card-accent:#2496ed; --card-icon-bg:rgba(36,150,237,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">🐳</div>
+          <div class="card-meta">
+            <div class="card-name">cAdvisor</div>
+            <div class="card-port">:8080</div>
+          </div>
+        </div>
+        <div class="card-desc">Per-container CPU, memory, and network usage in real time</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── LOGGING ────────────────────────────────────────────────── -->
+  <div id="logging" class="section-wrap">
+    <div class="section-head">
+      <div class="section-icon" style="--section-bg:rgba(0,191,179,0.1)">🔍</div>
+      <span class="section-title">Log Management</span>
+      <span class="section-count">3 services</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="http://109.199.120.120:5601" target="_blank"
+         style="--card-accent:#00bfb3; --card-icon-bg:rgba(0,191,179,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">🔍</div>
+          <div class="card-meta">
+            <div class="card-name">Kibana</div>
+            <div class="card-port">:5601</div>
+          </div>
+        </div>
+        <div class="card-desc">ELK stack — full-text log search, index management, analytics dashboards</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:3100" target="_blank"
+         style="--card-accent:#f7c948; --card-icon-bg:rgba(247,201,72,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">📋</div>
+          <div class="card-meta">
+            <div class="card-name">Loki</div>
+            <div class="card-port">:3100</div>
+          </div>
+        </div>
+        <div class="card-desc">Log aggregation backend — query with LogQL inside Grafana</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:9200" target="_blank"
+         style="--card-accent:#ffa657; --card-icon-bg:rgba(255,166,87,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">⚡</div>
+          <div class="card-meta">
+            <div class="card-name">Elasticsearch</div>
+            <div class="card-port">:9200</div>
+          </div>
+        </div>
+        <div class="card-desc">Full-text search &amp; analytics engine — ELK stack backend</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── KUBERNETES ─────────────────────────────────────────────── -->
+  <div id="k8s" class="section-wrap">
+    <div class="section-head">
+      <div class="section-icon" style="--section-bg:rgba(50,108,229,0.12)">☸️</div>
+      <span class="section-title">Kubernetes (k3s)</span>
+      <span class="section-count">4 services</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="http://109.199.120.120:3000/d/k3s-overview" target="_blank"
+         style="--card-accent:#326ce5; --card-icon-bg:rgba(50,108,229,0.1)">
+        <span class="badge-tag tag-k8s">k3s</span>
+        <div class="card-top">
+          <div class="card-emoji">☸️</div>
+          <div class="card-meta">
+            <div class="card-name">k3s Overview</div>
+            <div class="card-port">Grafana Dashboard</div>
+          </div>
+        </div>
+        <div class="card-desc">Pods, deployments, nodes and resource usage via kube-state-metrics</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:30900" target="_blank"
+         style="--card-accent:#e3b341; --card-icon-bg:rgba(230,179,65,0.12)">
+        <span class="badge-tag tag-k8s">k3s</span>
+        <div class="card-top">
+          <div class="card-emoji">⚡</div>
+          <div class="card-meta">
+            <div class="card-name">APISIX on k3s</div>
+            <div class="card-port">:30080 gateway · :30900 UI</div>
+          </div>
+        </div>
+        <div class="card-desc">Full APISIX stack running inside k3s — etcd, Redis, gateway, dashboard</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:30091/apisix/prometheus/metrics" target="_blank"
+         style="--card-accent:#e6522c; --card-icon-bg:rgba(230,82,44,0.1)">
+        <span class="badge-tag tag-k8s">k3s</span>
+        <div class="card-top">
+          <div class="card-emoji">📈</div>
+          <div class="card-meta">
+            <div class="card-name">APISIX Metrics</div>
+            <div class="card-port">:30091</div>
+          </div>
+        </div>
+        <div class="card-desc">Per-route Prometheus metrics scraped by Dockerized Prometheus</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:9090/targets" target="_blank"
+         style="--card-accent:#4a90e2; --card-icon-bg:rgba(74,144,226,0.1)">
+        <span class="badge-tag tag-k8s">k3s</span>
+        <div class="card-top">
+          <div class="card-emoji">🎯</div>
+          <div class="card-meta">
+            <div class="card-name">k8s Scrape Targets</div>
+            <div class="card-port">Prometheus Targets</div>
+          </div>
+        </div>
+        <div class="card-desc">kube-state-metrics, k3s API server, node and APISIX scrape status</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── ORCHESTRATION ──────────────────────────────────────────── -->
+  <div class="section-wrap">
+    <div class="section-head">
+      <div class="section-icon" style="--section-bg:rgba(188,140,255,0.12)">🚀</div>
+      <span class="section-title">Workflow Orchestration</span>
+      <span class="section-count">2 services</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="http://109.199.120.120:4200" target="_blank"
+         style="--card-accent:#bc8cff; --card-icon-bg:rgba(188,140,255,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">🚀</div>
+          <div class="card-meta">
+            <div class="card-name">Prefect UI</div>
+            <div class="card-port">:4200</div>
+          </div>
+        </div>
+        <div class="card-desc">Cron jobs, flow runs, deployments, scheduling, email alerts</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:3000/d/prefect-overview" target="_blank"
+         style="--card-accent:#9b5de5; --card-icon-bg:rgba(155,93,229,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">🔥</div>
+          <div class="card-meta">
+            <div class="card-name">Prefect Flows</div>
+            <div class="card-port">Grafana Dashboard</div>
+          </div>
+        </div>
+        <div class="card-desc">Completions, failures, email alerts &amp; live worker logs in Grafana</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── APPS & APIs ────────────────────────────────────────────── -->
+  <div id="apps" class="section-wrap">
+    <div class="section-head">
+      <div class="section-icon" style="--section-bg:rgba(88,166,255,0.12)">💻</div>
+      <span class="section-title">Applications &amp; APIs</span>
+      <span class="section-count">6 services</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="http://109.199.120.120:30080/dotnet/api/health" target="_blank"
+         style="--card-accent:#512bd4; --card-icon-bg:rgba(81,43,212,0.1)">
+        <span class="badge-tag tag-api">via APISIX :30080</span>
+        <div class="card-top">
+          <div class="card-emoji">⚙️</div>
+          <div class="card-meta">
+            <div class="card-name">Coderz .NET API</div>
+            <div class="card-port">direct :5050 · gateway :30080/dotnet/</div>
+          </div>
+        </div>
+        <div class="card-desc">ASP.NET Core 8 — items CRUD, request logging, PostgreSQL backend</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:5050/swagger" target="_blank"
+         style="--card-accent:#7b2ff7; --card-icon-bg:rgba(123,47,247,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">📄</div>
+          <div class="card-meta">
+            <div class="card-name">.NET API Swagger</div>
+            <div class="card-port">:5050/swagger</div>
+          </div>
+        </div>
+        <div class="card-desc">Interactive API docs — try items, logs, health endpoints</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:30080/webapi/health" target="_blank"
+         style="--card-accent:#58a6ff; --card-icon-bg:rgba(88,166,255,0.1)">
+        <span class="badge-tag tag-api">via APISIX :30080</span>
+        <div class="card-top">
+          <div class="card-emoji">🌐</div>
+          <div class="card-meta">
+            <div class="card-name">Coderz Web API</div>
+            <div class="card-port">direct :8888 · gateway :30080/webapi/</div>
+          </div>
+        </div>
+        <div class="card-desc">Python REST API — users, products, orders with Prometheus metrics</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:8888/swagger" target="_blank"
+         style="--card-accent:#2ea043; --card-icon-bg:rgba(46,160,67,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">📄</div>
+          <div class="card-meta">
+            <div class="card-name">Web API Swagger</div>
+            <div class="card-port">:8888/swagger</div>
+          </div>
+        </div>
+        <div class="card-desc">Interactive OpenAPI documentation for all Python API endpoints</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:5200/swagger" target="_blank"
+         style="--card-accent:#3fb950; --card-icon-bg:rgba(63,185,80,0.1)">
+        <span class="badge-tag tag-new">New</span>
+        <div class="card-top">
+          <div class="card-emoji">🛒</div>
+          <div class="card-meta">
+            <div class="card-name">eShop API</div>
+            <div class="card-port">:5200/swagger</div>
+          </div>
+        </div>
+        <div class="card-desc">ASP.NET Core 8 — Products, Cart, Orders, JWT Auth</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:3000/d/coderz-webapp" target="_blank"
+         style="--card-accent:#e8702a; --card-icon-bg:rgba(232,112,42,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">📊</div>
+          <div class="card-meta">
+            <div class="card-name">API Monitoring</div>
+            <div class="card-port">Grafana Dashboard</div>
+          </div>
+        </div>
+        <div class="card-desc">req/s, latency percentiles, error rate, endpoint breakdown</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── DATABASE ───────────────────────────────────────────────── -->
+  <div class="section-wrap">
+    <div class="section-head">
+      <div class="section-icon" style="--section-bg:rgba(51,103,145,0.12)">🗄</div>
+      <span class="section-title">Database</span>
+      <span class="section-count">3 services</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="http://109.199.120.120:5080" target="_blank"
+         style="--card-accent:#336791; --card-icon-bg:rgba(51,103,145,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">🗄</div>
+          <div class="card-meta">
+            <div class="card-name">pgAdmin 4</div>
+            <div class="card-port">:5080</div>
+          </div>
+        </div>
+        <div class="card-desc">PostgreSQL web UI — browse tables, run SQL, export data</div>
+        <div class="card-cred">admin@coderz.dev / coderz123</div>
+      </a>
+
+      <a class="card" href="#" style="--card-accent:#699eca; --card-icon-bg:rgba(105,158,202,0.1); cursor:default">
+        <div class="card-top">
+          <div class="card-emoji">🏦</div>
+          <div class="card-meta">
+            <div class="card-name">Coderz API DB</div>
+            <div class="card-port">:5433 — PostgreSQL 15</div>
+          </div>
+        </div>
+        <div class="card-desc">Direct connection via psql / DBeaver / TablePlus</div>
+        <div class="card-cred">coderapi / coderapi_2024</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:3000/d/dotnet-api" target="_blank"
+         style="--card-accent:#512bd4; --card-icon-bg:rgba(81,43,212,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">📊</div>
+          <div class="card-meta">
+            <div class="card-name">DB Request Logs</div>
+            <div class="card-port">Grafana Dashboard</div>
+          </div>
+        </div>
+        <div class="card-desc">Live table of stored API requests, error analysis &amp; top endpoints</div>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- ── LOAD TESTING ───────────────────────────────────────────── -->
+  <div id="testing" class="section-wrap">
+    <div class="section-head">
+      <div class="section-icon" style="--section-bg:rgba(246,201,14,0.1)">⚡</div>
+      <span class="section-title">Load Testing</span>
+      <span class="section-count">2 services</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="http://109.199.120.120:9000" target="_blank"
+         style="--card-accent:#f6c90e; --card-icon-bg:rgba(246,201,14,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">⚡</div>
+          <div class="card-meta">
+            <div class="card-name">k6 Runner</div>
+            <div class="card-port">:9000</div>
+          </div>
+        </div>
+        <div class="card-desc">Browser UI — choose scenario, VUs, duration. Constant, ramp-up, spike, stress</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:3000/d/k6-results" target="_blank"
+         style="--card-accent:#bc8cff; --card-icon-bg:rgba(188,140,255,0.1)">
+        <div class="card-top">
+          <div class="card-emoji">📉</div>
+          <div class="card-meta">
+            <div class="card-name">k6 Results</div>
+            <div class="card-port">Grafana Dashboard</div>
+          </div>
+        </div>
+        <div class="card-desc">Live: VUs, req/s, p50/p95/p99 latency, error rate during test runs</div>
+      </a>
+
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ── FOOTER ─────────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-links">
+    <a href="https://coderz-docs.mintlify.app" target="_blank">📖 Documentation</a>
+    <a href="http://109.199.120.120:3000" target="_blank">📊 Grafana</a>
+    <a href="http://109.199.120.120:30900" target="_blank">⚡ APISIX Dashboard</a>
+    <a href="https://github.com/AbdullahMohmmed95/coderz-stack" target="_blank">⑂ GitHub — coderz-stack</a>
+    <a href="https://github.com/AbdullahMohmmed95/coderz-docs" target="_blank">⑂ GitHub — coderz-docs</a>
+  </div>
+  <p>Coderz Stack · Self-hosted on <strong>109.199.120.120</strong> · Managed with Docker Compose + k3s</p>
+</footer>
+
 </body>
 </html>
