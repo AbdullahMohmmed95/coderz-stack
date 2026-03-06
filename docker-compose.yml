@@ -1,0 +1,551 @@
+# ─────────────────────────────────────────────────────────
+#   CODERZ STACK — docker-compose.yml
+#   Updated: Tue Mar  3 — Added Loki, Promtail, Prefect flows
+#   Location:  /opt/coderz
+# ─────────────────────────────────────────────────────────
+name: coderz
+
+networks:
+  coderz-net:
+    driver: bridge
+
+volumes:
+  es-data:
+  kibana-data:
+  grafana-data:
+  prometheus-data:
+  postgres-data:
+  loki-data:
+  coderapi-db-data:
+  pgadmin-data:
+  redis-data:
+
+services:
+
+  # ── Redis (Cache + Rate Limiting backend) ─────────────
+  redis:
+    image: redis:7-alpine
+    container_name: coderz-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --save 60 1
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - coderz-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── PostgreSQL (Prefect backend) ──────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: coderz-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: prefect
+      POSTGRES_PASSWORD: prefect_coderz_2024
+      POSTGRES_DB: prefect
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - coderz-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prefect"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Elasticsearch ─────────────────────────────────────
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.2
+    container_name: coderz-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.monitoring.collection.enabled=true
+      - ES_JAVA_OPTS=-Xms256m -Xmx256m
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - coderz-net
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -qv '\"status\":\"red\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # ── Kibana ────────────────────────────────────────────
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.2
+    container_name: coderz-kibana
+    restart: unless-stopped
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_NAME=coderz-kibana
+      - SERVER_HOST=0.0.0.0
+      - XPACK_SECURITY_ENABLED=false
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=coderz_key_32chars_minimum_here!
+      - LOGGING_ROOT_LEVEL=warn
+    volumes:
+      - kibana-data:/usr/share/kibana/data
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - coderz-net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+
+  # ── Logstash ──────────────────────────────────────────
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.12.2
+    container_name: coderz-logstash
+    restart: unless-stopped
+    user: root
+    environment:
+      - LS_JAVA_OPTS=-Xms256m -Xmx256m
+    volumes:
+      - ./configs/logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./configs/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./configs/logstash/config/jvm.options:/usr/share/logstash/config/jvm.options:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "5044:5044"
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - coderz-net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+
+  # ── Filebeat ──────────────────────────────────────────
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.12.2
+    container_name: coderz-filebeat
+    restart: unless-stopped
+    user: root
+    command: filebeat -e -strict.perms=false
+    volumes:
+      - ./configs/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - logstash
+    networks:
+      - coderz-net
+
+  # ── Loki (log aggregation for Grafana) ────────────────
+  loki:
+    image: grafana/loki:latest
+    container_name: coderz-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./configs/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki-data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - coderz-net
+
+  # ── Promtail (ships Docker container logs to Loki) ────
+  promtail:
+    image: grafana/promtail:latest
+    container_name: coderz-promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./configs/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/log:/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+    networks:
+      - coderz-net
+
+  # ── Prometheus ────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: coderz-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-lifecycle
+      - --web.enable-remote-write-receiver
+    volumes:
+      - ./configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./configs/prometheus/secrets:/etc/prometheus/secrets:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - coderz-net
+
+  # ── Node Exporter ─────────────────────────────────────
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: coderz-node-exporter
+    restart: unless-stopped
+    command:
+      - --path.procfs=/host/proc
+      - --path.rootfs=/rootfs
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    ports:
+      - "9100:9100"
+    networks:
+      - coderz-net
+
+  # ── cAdvisor (Docker container metrics) ───────────────
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: coderz-cadvisor
+    restart: unless-stopped
+    privileged: true
+    command:
+      - --housekeeping_interval=60s
+      - --max_housekeeping_interval=120s
+      - --allow_dynamic_housekeeping=true
+      - --disable_metrics=advtcp,cpuset,hugetlb,memory_numa,process,referenced_memory,resctrl,sched,tcp,udp
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - coderz-net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+
+  # ── Grafana ───────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: coderz-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=coderz123
+      - GF_SERVER_ROOT_URL=http://109.199.120.120:3000
+      - GF_INSTALL_PLUGINS=grafana-clock-panel
+      - GF_FEATURE_TOGGLES_ENABLE=lokiQuerySplitting
+      - GF_DEFAULT_APP_MODE=production
+      # ── SMTP / Email Alerts ──
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=host.docker.internal:25
+      - GF_SMTP_FROM_ADDRESS=aboodm7med1995@gmail.com
+      - GF_SMTP_FROM_NAME=Coderz Alerts
+      - GF_SMTP_SKIP_VERIFY=true
+      - GF_SMTP_STARTTLS_POLICY=OpportunisticStartTLS
+      # ── Unified Alerting ──
+      - GF_UNIFIED_ALERTING_ENABLED=true
+      - GF_ALERTING_ENABLED=false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./configs/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - elasticsearch
+      - loki
+    networks:
+      - coderz-net
+
+  # ── Prefect Server ────────────────────────────────────
+  prefect-server:
+    image: prefecthq/prefect:3-latest
+    container_name: coderz-prefect-server
+    restart: unless-stopped
+    command: prefect server start --host 0.0.0.0
+    environment:
+      - PREFECT_API_DATABASE_CONNECTION_URL=postgresql+asyncpg://prefect:prefect_coderz_2024@postgres:5432/prefect
+      - PREFECT_SERVER_API_HOST=0.0.0.0
+      - PREFECT_SERVER_API_PORT=4200
+      - PREFECT_UI_ENABLED=true
+      - PREFECT_API_URL=http://109.199.120.120:4200/api
+    ports:
+      - "4200:4200"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - coderz-net
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:4200/api/health', timeout=5)\" 2>/dev/null || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 45s
+
+  # ── Prefect Worker ────────────────────────────────────
+  prefect-worker:
+    image: prefecthq/prefect:3-latest
+    container_name: coderz-prefect-worker
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo '[worker] Waiting for Prefect API...';
+        until python3 -c \"import urllib.request; urllib.request.urlopen('http://prefect-server:4200/api/health', timeout=5)\" 2>/dev/null; do
+          echo '[worker] Not ready, retrying in 5s...'; sleep 5;
+        done;
+        echo '[worker] Prefect API is ready. Starting worker...';
+        prefect worker start --pool default-pool
+      "
+    environment:
+      - PREFECT_API_URL=http://prefect-server:4200/api
+      - ALERT_SMTP_HOST=host.docker.internal
+      - ALERT_SMTP_PORT=25
+      - ALERT_EMAIL=aboodm7med1995@gmail.com
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./configs/prefect/flows:/opt/prefect/flows:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /root/.kube:/root/.kube:ro
+      - /usr/local/bin/kubectl:/usr/local/bin/kubectl:ro
+    depends_on:
+      - prefect-server
+    networks:
+      - coderz-net
+
+  # ── Prefect Deploy (one-shot: creates deployments) ────
+  prefect-deploy:
+    image: prefecthq/prefect:3-latest
+    container_name: coderz-prefect-deploy
+    restart: "no"
+    command: >
+      sh -c "
+        echo '[deploy] Waiting for Prefect API...';
+        until python3 -c \"import urllib.request; urllib.request.urlopen('http://prefect-server:4200/api/health', timeout=5)\" 2>/dev/null; do
+          echo '[deploy] Not ready, retrying in 5s...'; sleep 5;
+        done;
+        echo '[deploy] Creating work pool...';
+        prefect work-pool create default-pool --type process 2>/dev/null || true;
+        echo '[deploy] Deploying flows from prefect.yaml...';
+        cd /opt/prefect/flows && prefect --no-prompt deploy --all;
+        echo '[deploy] All deployments created successfully!';
+      "
+    environment:
+      - PREFECT_API_URL=http://prefect-server:4200/api
+    volumes:
+      - ./configs/prefect/flows:/opt/prefect/flows:ro
+    depends_on:
+      - prefect-server
+    networks:
+      - coderz-net
+
+  # ── Kibana Setup (one-shot: creates data views + dashboards) ─
+  kibana-setup:
+    image: curlimages/curl:latest
+    container_name: coderz-kibana-setup
+    restart: "no"
+    entrypoint: sh
+    volumes:
+      - ./configs/kibana/dotnet-api-dashboard.ndjson:/tmp/dotnet-api-dashboard.ndjson:ro
+    command:
+      - -c
+      - |
+        echo '[kibana-setup] Waiting for Kibana...';
+        until curl -sf http://kibana:5601/api/status -o /dev/null; do
+          echo '[kibana-setup] Not ready, retrying in 10s...'; sleep 10;
+        done;
+        sleep 5;
+        echo '[kibana-setup] Creating filebeat-* data view (fixed id: coderz-filebeat-dv)...';
+        curl -sf -X POST http://kibana:5601/api/data_views/data_view -H 'Content-Type: application/json' -H 'kbn-xsrf: true' -d '{"override":true,"data_view":{"id":"coderz-filebeat-dv","title":"filebeat-*","timeFieldName":"@timestamp","name":"Filebeat Logs"}}';
+        echo '';
+        echo '[kibana-setup] Creating logstash-* data view...';
+        curl -sf -X POST http://kibana:5601/api/data_views/data_view -H 'Content-Type: application/json' -H 'kbn-xsrf: true' -d '{"data_view":{"title":"logstash-*","timeFieldName":"@timestamp","name":"Logstash Logs"}}';
+        echo '';
+        echo '[kibana-setup] Creating api-logs-* data view...';
+        curl -sf -X POST http://kibana:5601/api/data_views/data_view -H 'Content-Type: application/json' -H 'kbn-xsrf: true' -d '{"data_view":{"id":"coderz-api-logs-dv","title":"api-logs-*","timeFieldName":"@timestamp","name":"API Request Logs"}}';
+        echo '';
+        echo '[kibana-setup] Importing .NET API dashboard...';
+        curl -sf -X POST 'http://kibana:5601/api/saved_objects/_import?overwrite=true' -H 'kbn-xsrf: true' -F "file=@/tmp/dotnet-api-dashboard.ndjson";
+        echo '';
+        echo '[kibana-setup] Done!';
+    depends_on:
+      - kibana
+      - elasticsearch
+    networks:
+      - coderz-net
+
+  # ── CoderAPI DB (PostgreSQL for .NET API) ─────────────
+  coderz-db:
+    image: postgres:15-alpine
+    container_name: coderz-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: coderapi
+      POSTGRES_PASSWORD: coderapi_2024
+      POSTGRES_DB: coderapi
+    volumes:
+      - coderapi-db-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - coderz-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coderapi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Coderz .NET API (ASP.NET Core 8 + PostgreSQL) ─────
+  coderz-dotnet-api:
+    build:
+      context: ./configs/dotnet-api
+    image: coderz-dotnet-api:latest
+    container_name: coderz-dotnet-api
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=coderz-db;Database=coderapi;Username=coderapi;Password=coderapi_2024
+      - ConnectionStrings__Redis=coderz-redis:6379
+    ports:
+      - "5050:8080"
+    depends_on:
+      coderz-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - coderz-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ── pgAdmin 4 (PostgreSQL web UI) ─────────────────────
+  pgadmin:
+    build:
+      context: ./configs/pgadmin
+    image: coderz-pgadmin:latest
+    container_name: coderz-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@coderz.dev
+      PGADMIN_DEFAULT_PASSWORD: coderz123
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./configs/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    ports:
+      - "5080:80"
+    depends_on:
+      - coderz-db
+      - postgres
+    networks:
+      - coderz-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80/misc/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  # ── Coderz Web App (.NET-style REST API + Prometheus) ─
+  coderz-webapp:
+    image: python:3.11-slim
+    container_name: coderz-webapp
+    restart: unless-stopped
+    environment:
+      - REDIS_URL=redis://coderz-redis:6379
+    command: >
+      sh -c "pip install -q fastapi uvicorn prometheus-client redis &&
+             python /app/app.py"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./configs/webapp:/app:ro
+    ports:
+      - "8888:8080"
+    networks:
+      - coderz-net
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8080/api/health',timeout=5)\" 2>/dev/null || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ── k6 Load Test Runner (UI + k6 binary) ───────────────
+  coderz-k6-runner:
+    build:
+      context: ./configs/k6-runner
+    image: coderz-k6-runner:latest
+    container_name: coderz-k6-runner
+    restart: unless-stopped
+    environment:
+      - PROMETHEUS_URL=http://prometheus:9090
+    ports:
+      - "9000:9000"
+    depends_on:
+      - prometheus
+    networks:
+      - coderz-net
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:9000/health',timeout=5)\" 2>/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ── Nginx (Landing page on 80/443 + eShop proxy) ──────
+  nginx:
+    image: nginx:alpine
+    container_name: coderz-nginx
+    restart: unless-stopped
+    volumes:
+      - ./configs/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./configs/nginx/html:/usr/share/nginx/html:ro
+      - ./configs/nginx/ssl:/etc/nginx/ssl:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - coderz-net

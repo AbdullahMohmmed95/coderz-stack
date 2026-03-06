@@ -1,0 +1,338 @@
+{
+  "uid": "prefect-overview",
+  "title": "Prefect — Flows Overview",
+  "description": "Prefect 3 flow run activity: completions, failures, email alerts, and live logs",
+  "tags": ["prefect", "flows", "orchestration"],
+  "timezone": "browser",
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "panels": [
+
+    { "id": 100, "type": "row", "title": "Flow Run Stats", "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }, "collapsed": false },
+
+    {
+      "id": 1, "type": "stat", "title": "Completed Flows",
+      "gridPos": { "x": 0, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } }
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |= \"Completed\" [$__range]))",
+        "queryType": "instant",
+        "legendFormat": "Completed",
+        "refId": "A"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+
+    {
+      "id": 2, "type": "stat", "title": "Failed Flows",
+      "gridPos": { "x": 4, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "red", "value": 1 }
+          ]}
+        }
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |~ \"FAILED|Failed\" [$__range]))",
+        "queryType": "instant",
+        "legendFormat": "Failed",
+        "refId": "A"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+
+    {
+      "id": 3, "type": "stat", "title": "Alert Emails Sent",
+      "gridPos": { "x": 8, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "blue", "value": null },
+            { "color": "orange", "value": 5 }
+          ]}
+        }
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |= \"Alert email sent\" [$__range]))",
+        "queryType": "instant",
+        "legendFormat": "Emails",
+        "refId": "A"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+
+    {
+      "id": 4, "type": "stat", "title": "Threshold Alerts",
+      "gridPos": { "x": 12, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 1 }
+          ]}
+        }
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |~ \"threshold exceeded|exceeds threshold\" [$__range]))",
+        "queryType": "instant",
+        "legendFormat": "Threshold Alerts",
+        "refId": "A"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+
+    {
+      "id": 5, "type": "stat", "title": "k8s Health Alerts",
+      "gridPos": { "x": 16, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "red", "value": 1 }
+          ]}
+        }
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |= \"k8s-health\" |~ \"FAILED|unhealthy|not ready|error\" [$__range]))",
+        "queryType": "instant",
+        "legendFormat": "k8s Alerts",
+        "refId": "A"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+
+    {
+      "id": 6, "type": "stat", "title": "Docker Restart Alerts",
+      "gridPos": { "x": 20, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "red", "value": 1 }
+          ]}
+        }
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |= \"docker-restart\" |~ \"restart|unhealthy\" [$__range]))",
+        "queryType": "instant",
+        "legendFormat": "Docker Alerts",
+        "refId": "A"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+
+    { "id": 101, "type": "row", "title": "Flow Activity", "gridPos": { "x": 0, "y": 5, "w": 24, "h": 1 }, "collapsed": false },
+
+    {
+      "id": 7, "type": "timeseries", "title": "Flow Events Over Time (5m windows)",
+      "gridPos": { "x": 0, "y": 6, "w": 16, "h": 8 },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 0,
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 15 },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |= \"Completed\" [5m]))",
+          "legendFormat": "Completed",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |~ \"FAILED|Failed\" [5m]))",
+          "legendFormat": "Failed",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |= \"Alert email sent\" [5m]))",
+          "legendFormat": "Emails Sent",
+          "refId": "C"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+
+    {
+      "id": 8, "type": "timeseries", "title": "Worker Log Volume (lines/min)",
+      "gridPos": { "x": 16, "y": 6, "w": 8, "h": 8 },
+      "options": {
+        "tooltip": { "mode": "single" },
+        "legend": { "displayMode": "hidden" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 1,
+          "color": { "mode": "fixed", "fixedColor": "purple" },
+          "custom": { "lineWidth": 2, "fillOpacity": 20 },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] }
+        }
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "sum(rate({container=\"coderz-prefect-worker\"}[1m])) * 60",
+        "legendFormat": "Lines/min",
+        "refId": "A"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+
+    { "id": 102, "type": "row", "title": "Key Events & Deployment Breakdown", "gridPos": { "x": 0, "y": 14, "w": 24, "h": 1 }, "collapsed": false },
+
+    {
+      "id": 9, "type": "logs", "title": "Flow Completions, Failures & Alerts",
+      "gridPos": { "x": 0, "y": 15, "w": 12, "h": 12 },
+      "options": {
+        "dedupStrategy": "none",
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "{container=\"coderz-prefect-worker\"} |~ \"Completed|FAILED|Failed|Alert email sent|threshold exceeded|exceeds threshold|unhealthy|restart\"",
+        "maxLines": 300,
+        "refId": "A"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+
+    {
+      "id": 10, "type": "timeseries", "title": "Activity per Deployment (5m windows)",
+      "gridPos": { "x": 12, "y": 15, "w": 12, "h": 12 },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 1, "fillOpacity": 10 },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |= \"system-health\" [5m]))",
+          "legendFormat": "system-health",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |= \"services-health\" [5m]))",
+          "legendFormat": "services-health",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |= \"threshold-alert\" [5m]))",
+          "legendFormat": "threshold-alert",
+          "refId": "C"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |= \"k8s-health\" [5m]))",
+          "legendFormat": "k8s-health",
+          "refId": "D"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |= \"docker-restart\" [5m]))",
+          "legendFormat": "docker-restart",
+          "refId": "E"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |= \"daily-summary\" [5m]))",
+          "legendFormat": "daily-summary",
+          "refId": "F"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "expr": "sum(count_over_time({container=\"coderz-prefect-worker\"} |= \"weekly-cleanup\" [5m]))",
+          "legendFormat": "weekly-cleanup",
+          "refId": "G"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+
+    { "id": 103, "type": "row", "title": "Live Logs", "gridPos": { "x": 0, "y": 27, "w": 24, "h": 1 }, "collapsed": false },
+
+    {
+      "id": 11, "type": "logs", "title": "Prefect Worker — Live",
+      "gridPos": { "x": 0, "y": 28, "w": 16, "h": 12 },
+      "options": {
+        "dedupStrategy": "none",
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "{container=\"coderz-prefect-worker\"}",
+        "maxLines": 500,
+        "refId": "A"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+
+    {
+      "id": 12, "type": "logs", "title": "Prefect Server — Live",
+      "gridPos": { "x": 16, "y": 28, "w": 8, "h": 12 },
+      "options": {
+        "dedupStrategy": "none",
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": false,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "{container=\"coderz-prefect-server\"}",
+        "maxLines": 200,
+        "refId": "A"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    }
+
+  ]
+}

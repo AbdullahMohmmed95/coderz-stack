@@ -1,0 +1,65 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: node-exporter
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  - job_name: coderz-webapp
+    static_configs:
+      - targets: ['coderz-webapp:8080']
+    metrics_path: /metrics
+
+  - job_name: coderz-dotnet-api
+    static_configs:
+      - targets: ['coderz-dotnet-api:8080']
+    metrics_path: /metrics
+
+  - job_name: eshop-publicapi
+    static_configs:
+      - targets: ['eshop-publicapi:8080']
+    metrics_path: /metrics
+
+  - job_name: kube-state-metrics
+    static_configs:
+      - targets: ['10.43.126.54:8080']
+    relabel_configs:
+      - target_label: cluster
+        replacement: coderz-k3s
+
+  - job_name: k3s-apiserver
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+    bearer_token_file: /etc/prometheus/secrets/k3s-token
+    static_configs:
+      - targets: ['109.199.120.120:6443']
+
+  - job_name: apisix-gateway
+    static_configs:
+      - targets: ['109.199.120.120:30091']
+    metrics_path: /apisix/prometheus/metrics
+    relabel_configs:
+      - target_label: cluster
+        replacement: coderz-k3s
+      - target_label: namespace
+        replacement: apisix
+
+  - job_name: redis-exporter
+    static_configs:
+      - targets: ['109.199.120.120:30121']
+    relabel_configs:
+      - target_label: cluster
+        replacement: coderz-k3s
+      - target_label: namespace
+        replacement: apisix

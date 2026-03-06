@@ -1,0 +1,333 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": { "list": [] },
+  "description": "ASP.NET Core 8 API \u2014 Prometheus metrics + PostgreSQL request log analysis",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }, "id": 100, "title": "Live Metrics (Prometheus)", "type": "row" },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] },
+          "unit": "reqps", "noValue": "0"
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "id": 1,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background", "graphMode": "area" },
+      "title": "Requests / sec",
+      "type": "stat",
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_requests_received_total{job=\"coderz-dotnet-api\"}[2m]))", "legendFormat": "req/s", "refId": "A" }]
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 0.5 }, { "color": "red", "value": 1 } ] },
+          "unit": "s", "noValue": "0"
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "id": 2,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background", "graphMode": "none" },
+      "title": "P95 Latency",
+      "type": "stat",
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"coderz-dotnet-api\"}[5m])) by (le))", "legendFormat": "p95", "refId": "A" }]
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 } ] },
+          "unit": "percent", "noValue": "0"
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "id": 3,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background", "graphMode": "none" },
+      "title": "Error Rate %",
+      "type": "stat",
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "100 * sum(rate(http_requests_received_total{job=\"coderz-dotnet-api\",code=~\"5..\"}[5m])) / sum(rate(http_requests_received_total{job=\"coderz-dotnet-api\"}[5m]))", "legendFormat": "error %", "refId": "A" }]
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] },
+          "unit": "short", "noValue": "0"
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "id": 4,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background", "graphMode": "area" },
+      "title": "Active Requests",
+      "type": "stat",
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(http_requests_in_progress{job=\"coderz-dotnet-api\"})", "legendFormat": "active", "refId": "A" }]
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] },
+          "unit": "short", "noValue": "0"
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "id": 5,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background", "graphMode": "area" },
+      "title": ".NET GC Collections",
+      "type": "stat",
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(increase(dotnet_collection_count_total{job=\"coderz-dotnet-api\"}[5m]))", "legendFormat": "GC", "refId": "A" }]
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "purple", "value": null } ] },
+          "unit": "bytes", "noValue": "0"
+        }
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "id": 6,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background", "graphMode": "area" },
+      "title": ".NET Working Set",
+      "type": "stat",
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "dotnet_total_memory_bytes{job=\"coderz-dotnet-api\"}", "legendFormat": "memory", "refId": "A" }]
+    },
+
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 }, "id": 101, "title": "Request Throughput (Prometheus)", "type": "row" },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 10 } }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "id": 10,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] } },
+      "title": "Requests/sec by Endpoint",
+      "type": "timeseries",
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum by (handler) (rate(http_requests_received_total{job=\"coderz-dotnet-api\"}[2m]))", "legendFormat": "{{handler}}", "refId": "A" }]
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 10 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "2xx" }, "properties": [ { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "4xx" }, "properties": [ { "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } } ] },
+          { "matcher": { "id": "byName", "options": "5xx" }, "properties": [ { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } } ] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "id": 11,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] } },
+      "title": "HTTP Status Breakdown",
+      "type": "timeseries",
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_requests_received_total{job=\"coderz-dotnet-api\",code=~\"2..\"}[2m]))", "legendFormat": "2xx", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_requests_received_total{job=\"coderz-dotnet-api\",code=~\"4..\"}[2m]))", "legendFormat": "4xx", "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_requests_received_total{job=\"coderz-dotnet-api\",code=~\"5..\"}[2m]))", "legendFormat": "5xx", "refId": "C" }
+      ]
+    },
+
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 }, "id": 102, "title": "Latency Percentiles (Prometheus)", "type": "row" },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "s", "custom": { "lineWidth": 2, "fillOpacity": 5 } }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "id": 20,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] } },
+      "title": "Latency Percentiles (p50 / p95 / p99)",
+      "type": "timeseries",
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"coderz-dotnet-api\"}[5m])) by (le))", "legendFormat": "p50", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"coderz-dotnet-api\"}[5m])) by (le))", "legendFormat": "p95", "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"coderz-dotnet-api\"}[5m])) by (le))", "legendFormat": "p99", "refId": "C" }
+      ]
+    },
+
+    {
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 20 } }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "id": 21,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "title": "Active Requests Over Time",
+      "type": "timeseries",
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(http_requests_in_progress{job=\"coderz-dotnet-api\"})", "legendFormat": "active requests", "refId": "A" }]
+    },
+
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 }, "id": 103, "title": "From Database \u2014 PostgreSQL Live Data", "type": "row" },
+
+    {
+      "datasource": { "type": "postgres", "uid": "PGSQL_CODERAPI" },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "duration_ms" }, "properties": [ { "id": "unit", "value": "ms" }, { "id": "custom.width", "value": 90 } ] },
+          { "matcher": { "id": "byName", "options": "status_code" }, "properties": [ { "id": "custom.width", "value": 80 },
+            { "id": "color", "value": { "mode": "thresholds" } },
+            { "id": "thresholds", "value": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 400 }, { "color": "red", "value": 500 } ] } }
+          ] }
+        ]
+      },
+      "gridPos": { "h": 9, "w": 14, "x": 0, "y": 24 },
+      "id": 30,
+      "options": { "sortBy": [], "footer": { "show": false } },
+      "title": "Last 50 Requests (Live DB)",
+      "type": "table",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "PGSQL_CODERAPI" },
+        "rawSql": "SELECT created_at as \"Time\", method, path, status_code, duration_ms, ip_address FROM \"RequestLogs\" ORDER BY created_at DESC LIMIT 50",
+        "format": "table",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "PGSQL_CODERAPI" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 10 } }
+      },
+      "gridPos": { "h": 9, "w": 10, "x": 14, "y": 24 },
+      "id": 31,
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "title": "Requests per Minute (last hour)",
+      "type": "timeseries",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "PGSQL_CODERAPI" },
+        "rawSql": "SELECT date_trunc('minute', created_at) AS \"time\", COUNT(*) AS \"requests\" FROM \"RequestLogs\" WHERE created_at > NOW() - INTERVAL '1 hour' GROUP BY 1 ORDER BY 1",
+        "format": "time_series",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "PGSQL_CODERAPI" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "short" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 10, "x": 0, "y": 33 },
+      "id": 32,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "horizontal", "displayMode": "gradient", "valueMode": "color" },
+      "title": "Top Endpoints by Request Count",
+      "type": "bargauge",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "PGSQL_CODERAPI" },
+        "rawSql": "SELECT path AS \"metric\", COUNT(*) AS \"value\" FROM \"RequestLogs\" GROUP BY path ORDER BY COUNT(*) DESC LIMIT 10",
+        "format": "table",
+        "refId": "A"
+      }]
+    },
+
+    { "collapsed": false, "gridPos": { "h": 1, "w": 24, "x": 0, "y": 41 }, "id": 104, "title": "Error Analysis (PostgreSQL)", "type": "row" },
+
+    {
+      "datasource": { "type": "postgres", "uid": "PGSQL_CODERAPI" },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "status_code" }, "properties": [
+            { "id": "custom.width", "value": 90 },
+            { "id": "color", "value": { "mode": "thresholds" } },
+            { "id": "thresholds", "value": { "mode": "absolute", "steps": [ { "color": "yellow", "value": null }, { "color": "red", "value": 500 } ] } }
+          ]},
+          { "matcher": { "id": "byName", "options": "duration_ms" }, "properties": [ { "id": "unit", "value": "ms" } ] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 42 },
+      "id": 40,
+      "options": { "sortBy": [{ "displayName": "Time", "desc": true }], "footer": { "show": false } },
+      "title": "Error Requests (status >= 400)",
+      "type": "table",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "PGSQL_CODERAPI" },
+        "rawSql": "SELECT created_at as \"Time\", method, path, status_code, duration_ms FROM \"RequestLogs\" WHERE status_code >= 400 ORDER BY created_at DESC LIMIT 50",
+        "format": "table",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "PGSQL_CODERAPI" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null } ] },
+          "unit": "short", "noValue": "0"
+        }
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 42 },
+      "id": 41,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background", "graphMode": "none" },
+      "title": "Total Requests in DB",
+      "type": "stat",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "PGSQL_CODERAPI" },
+        "rawSql": "SELECT COUNT(*) as \"value\" FROM \"RequestLogs\"",
+        "format": "table",
+        "refId": "A"
+      }]
+    },
+
+    {
+      "datasource": { "type": "postgres", "uid": "PGSQL_CODERAPI" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 } ] },
+          "unit": "percent", "noValue": "0"
+        }
+      },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 46 },
+      "id": 42,
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background", "graphMode": "none" },
+      "title": "DB Error Rate %",
+      "type": "stat",
+      "targets": [{
+        "datasource": { "type": "postgres", "uid": "PGSQL_CODERAPI" },
+        "rawSql": "SELECT ROUND(100.0 * SUM(CASE WHEN status_code >= 400 THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0), 2) as \"value\" FROM \"RequestLogs\"",
+        "format": "table",
+        "refId": "A"
+      }]
+    }
+
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "tags": ["dotnet", "api", "postgresql", "prometheus"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Coderz .NET API \u2014 Full Stack Dashboard",
+  "uid": "coderz-dotnet-api",
+  "version": 1
+}

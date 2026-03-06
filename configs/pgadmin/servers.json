@@ -1,0 +1,24 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Coderz API DB (.NET)",
+      "Group": "Coderz Stack",
+      "Host": "coderz-db",
+      "Port": 5432,
+      "MaintenanceDB": "coderapi",
+      "Username": "coderapi",
+      "PassFile": "/pgadmin4/.pgpass",
+      "SSLMode": "disable"
+    },
+    "2": {
+      "Name": "Prefect DB (Workflows)",
+      "Group": "Coderz Stack",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "prefect",
+      "Username": "prefect",
+      "PassFile": "/pgadmin4/.pgpass",
+      "SSLMode": "disable"
+    }
+  }
+}

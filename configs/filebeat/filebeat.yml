@@ -1,0 +1,23 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/*.log
+      - /var/log/**/*.log
+
+  - type: container
+    paths:
+      - /var/lib/docker/containers/*/*.log
+    stream: all
+
+processors:
+  - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+      labels.dedot: true
+  - add_host_metadata: ~
+
+output.logstash:
+  hosts: ["logstash:5044"]
+
+setup.kibana:
+  host: "kibana:5601"

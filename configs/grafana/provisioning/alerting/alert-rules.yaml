@@ -1,0 +1,198 @@
+apiVersion: 1
+
+groups:
+  # ── System Resource Alerts ──────────────────────────────
+  - orgId: 1
+    name: System Alerts
+    folder: Coderz
+    interval: 1m
+    rules:
+
+      # ── CPU > 80% for 5 min ──
+      - uid: coderz-cpu-high
+        title: High CPU Usage
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: 100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+              instant: true
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: "-100"
+            model:
+              type: threshold
+              expression: A
+              refId: B
+              conditions:
+                - type: query
+                  query:
+                    params: [B]
+                  reducer:
+                    type: last
+                    params: []
+                  evaluator:
+                    type: gt
+                    params: [80]
+                  operator:
+                    type: and
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "High CPU Usage on Coderz Server"
+          description: "CPU usage is above 80% for more than 5 minutes. Current: {{ printf \"%.1f\" $values.A.Value }}%"
+        labels:
+          severity: warning
+        isPaused: false
+
+      # ── RAM > 85% for 5 min ──
+      - uid: coderz-ram-high
+        title: High Memory Usage
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100
+              instant: true
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: "-100"
+            model:
+              type: threshold
+              expression: A
+              refId: B
+              conditions:
+                - type: query
+                  query:
+                    params: [B]
+                  reducer:
+                    type: last
+                    params: []
+                  evaluator:
+                    type: gt
+                    params: [85]
+                  operator:
+                    type: and
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "High Memory Usage on Coderz Server"
+          description: "Memory usage is above 85% for more than 5 minutes. Current: {{ printf \"%.1f\" $values.A.Value }}%"
+        labels:
+          severity: warning
+        isPaused: false
+
+      # ── Disk > 90% (< 10% free) for 5 min ──
+      - uid: coderz-disk-high
+        title: Low Disk Space
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: 100 - (node_filesystem_avail_bytes{mountpoint="/",fstype!="tmpfs"} / node_filesystem_size_bytes{mountpoint="/",fstype!="tmpfs"} * 100)
+              instant: true
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: "-100"
+            model:
+              type: threshold
+              expression: A
+              refId: B
+              conditions:
+                - type: query
+                  query:
+                    params: [B]
+                  reducer:
+                    type: last
+                    params: []
+                  evaluator:
+                    type: gt
+                    params: [90]
+                  operator:
+                    type: and
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "Low Disk Space on Coderz Server"
+          description: "Disk usage is above 90% (less than 10% free). Current: {{ printf \"%.1f\" $values.A.Value }}% used"
+        labels:
+          severity: critical
+        isPaused: false
+
+  # ── Container Availability Alerts ──────────────────────
+  - orgId: 1
+    name: Container Alerts
+    folder: Coderz
+    interval: 1m
+    rules:
+
+      # ── Critical containers not all running ──
+      - uid: coderz-containers-down
+        title: Container Down
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 120
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              # Count of critical containers seen in last 90 seconds
+              # Fires if any of the 6 critical containers disappear
+              expr: count(time() - container_last_seen{name=~"coderz-(grafana|prometheus|elasticsearch|kibana|loki|prefect-server)",image!=""} < 90)
+              instant: true
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 120
+              to: 0
+            datasourceUid: "-100"
+            model:
+              type: threshold
+              expression: A
+              refId: B
+              conditions:
+                - type: query
+                  query:
+                    params: [B]
+                  reducer:
+                    type: last
+                    params: []
+                  evaluator:
+                    type: lt
+                    params: [6]
+                  operator:
+                    type: and
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 2m
+        annotations:
+          summary: "One or more critical containers are down"
+          description: "Expected 6 critical containers running, found {{ $values.A }}. Check Docker: grafana, prometheus, elasticsearch, kibana, loki, prefect-server"
+        labels:
+          severity: critical
+        isPaused: false

@@ -1,0 +1,76 @@
+# ─────────────────────────────────────────────────────────
+#  APISIX config.yaml — mounted into the APISIX container
+# ─────────────────────────────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: apisix-config
+  namespace: apisix
+data:
+  config.yaml: |
+    apisix:
+      node_listen: 9080
+      enable_heartbeat: true
+      enable_admin: true
+      enable_debug: false
+
+    deployment:
+      role: traditional
+      role_traditional:
+        config_provider: etcd
+
+      admin:
+        admin_listen:
+          ip: 0.0.0.0
+          port: 9180
+        https_admin: false
+        admin_api_version: v3
+        admin_key_required: true
+        admin_key:
+          - name: admin
+            key: coderz-apisix-admin-key-2024
+            role: admin
+        allow_admin:
+          - 0.0.0.0/0
+
+      etcd:
+        host:
+          - http://etcd-service.apisix.svc.cluster.local:2379
+        prefix: /apisix
+        timeout: 30
+
+    plugin_attr:
+      prometheus:
+        export_uri: /apisix/prometheus/metrics
+        export_addr:
+          ip: 0.0.0.0
+          port: 9091
+        enable_export_server: true
+        metric_prefix: apisix_
+        default_buckets:
+          - 1
+          - 5
+          - 10
+          - 25
+          - 50
+          - 100
+          - 250
+          - 500
+          - 1000
+          - 2500
+          - 5000
+          - 10000
+
+    nginx_config:
+      error_log: /dev/stderr
+      error_log_level: warn
+      worker_processes: 1
+      events:
+        worker_connections: 10240
+      http:
+        access_log: /dev/stdout
+        keepalive_timeout: 60s
+        client_header_timeout: 60s
+        client_body_timeout: 60s
+        send_timeout: 10s
+        charset: utf-8

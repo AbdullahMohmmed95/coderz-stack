@@ -1,0 +1,240 @@
+{
+  "title": "Alerts Status",
+  "uid": "coderz-alerts-001",
+  "description": "Real-time alert status for CPU, Memory, Disk, and Containers",
+  "tags": ["coderz", "alerts", "status"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "1m",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+
+    {
+      "id": 1,
+      "title": "CPU Usage",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [{
+        "expr": "100 - (avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+        "legendFormat": "CPU %",
+        "refId": "A"
+      }],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 70, "color": "yellow" },
+              { "value": 80, "color": "red" }
+            ]
+          },
+          "mappings": []
+        }
+      }
+    },
+
+    {
+      "id": 2,
+      "title": "Memory Usage",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [{
+        "expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100",
+        "legendFormat": "RAM %",
+        "refId": "A"
+      }],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 75, "color": "yellow" },
+              { "value": 85, "color": "red" }
+            ]
+          },
+          "mappings": []
+        }
+      }
+    },
+
+    {
+      "id": 3,
+      "title": "Disk Usage",
+      "type": "stat",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [{
+        "expr": "100 - (node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"} * 100)",
+        "legendFormat": "Disk %",
+        "refId": "A"
+      }],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 80, "color": "yellow" },
+              { "value": 90, "color": "red" }
+            ]
+          },
+          "mappings": []
+        }
+      }
+    },
+
+    {
+      "id": 4,
+      "title": "Critical Containers Running",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [{
+        "expr": "count(time() - container_last_seen{name=~\"coderz-(grafana|prometheus|elasticsearch|kibana|loki|prefect-server)\",image!=\"\"} < 90) or vector(0)",
+        "legendFormat": "Containers",
+        "refId": "A"
+      }],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 6,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "red" },
+              { "value": 5, "color": "yellow" },
+              { "value": 6, "color": "green" }
+            ]
+          },
+          "mappings": [
+            { "type": "value", "options": { "6": { "text": "6 / 6 OK", "color": "green" } } }
+          ]
+        }
+      }
+    },
+
+    {
+      "id": 5,
+      "title": "CPU / Memory / Disk Over Time",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 5, "w": 24, "h": 9 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [
+        {
+          "expr": "100 - (avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "CPU %",
+          "refId": "A"
+        },
+        {
+          "expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100",
+          "legendFormat": "RAM %",
+          "refId": "B"
+        },
+        {
+          "expr": "100 - (node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"} * 100)",
+          "legendFormat": "Disk %",
+          "refId": "C"
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 80, "color": "red" }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "CPU %" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "RAM %" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Disk %" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "purple", "mode": "fixed" } }]
+          }
+        ]
+      }
+    },
+
+    {
+      "id": 6,
+      "title": "Alert Thresholds Reference",
+      "type": "text",
+      "gridPos": { "x": 0, "y": 14, "w": 12, "h": 4 },
+      "options": {
+        "mode": "markdown",
+        "content": "### Alert Thresholds\n| Metric | Warning | Critical |\n|--------|---------|----------|\n| CPU | > 70% | > 80% (5 min) |\n| Memory | > 75% | > 85% (5 min) |\n| Disk | > 80% | > 90% (5 min) |\n| Containers | < 6 running | < 6 running (2 min) |\n\nAlerts sent to: **alerts@coderz.local**"
+      }
+    },
+
+    {
+      "id": 7,
+      "title": "Prefect Flows Schedule",
+      "type": "text",
+      "gridPos": { "x": 12, "y": 14, "w": 12, "h": 4 },
+      "options": {
+        "mode": "markdown",
+        "content": "### Prefect Automation Schedule\n| Flow | Schedule |\n|------|----------|\n| System Health Check | Every 5 min |\n| Services Health Check | Every 10 min |\n| Threshold Alert Check | Every 15 min |\n| Daily Summary Report | 06:00 UTC |\n| Weekly Cleanup Report | Sunday 02:00 UTC |\n\nPrefect UI: [http://109.199.120.120:4200](http://109.199.120.120:4200)"
+      }
+    }
+
+  ]
+}

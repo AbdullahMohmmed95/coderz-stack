@@ -1,0 +1,52 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: warn
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    backoff_config:
+      min_period: 500ms
+      max_period: 5m
+      max_retries: 10
+
+scrape_configs:
+
+  # ── Docker container logs via Docker socket ──────────────
+  - job_name: docker-containers
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 10s
+    relabel_configs:
+      # Extract container name (strip leading /)
+      - source_labels: ["__meta_docker_container_name"]
+        regex: "/(.*)"
+        target_label: container
+      # Keep docker log stream label (stdout / stderr)
+      - source_labels: ["__meta_docker_container_log_stream"]
+        target_label: stream
+      # Keep image name
+      - source_labels: ["__meta_docker_container_image_id"]
+        target_label: image
+      # Keep compose service name if set
+      - source_labels: ["__meta_docker_container_label_com_docker_compose_service"]
+        target_label: service
+      # Keep compose project name if set
+      - source_labels: ["__meta_docker_container_label_com_docker_compose_project"]
+        target_label: compose_project
+      # Use container name as job
+      - source_labels: [container]
+        target_label: job
+
+  # ── Host /var/log files ──────────────────────────────────
+  - job_name: host-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: host-logs
+          host: coderz-server
+          __path__: /var/log/{syslog,auth.log,kern.log,messages}

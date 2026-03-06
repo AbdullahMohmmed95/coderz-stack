@@ -1,0 +1,102 @@
+name: coderz-flows
+prefect-version: "3.0.0"
+
+build: null
+push: null
+
+pull:
+  - prefect.deployments.steps.set_working_directory:
+      directory: /opt/prefect/flows
+
+deployments:
+
+  # ── Flow 1: System Health Check — every 5 min ────────
+  - name: system-health-every-5-min
+    version: "2.0"
+    tags: ["monitoring", "system", "cron"]
+    description: "Check CPU, Memory and Disk usage every 5 minutes"
+    entrypoint: sample_flows.py:system_health_check
+    work_pool:
+      name: default-pool
+    schedules:
+      - cron: "*/5 * * * *"
+        timezone: "UTC"
+        active: true
+
+  # ── Flow 2: Services Health Check — every 10 min ─────
+  - name: services-health-every-10-min
+    version: "2.0"
+    tags: ["monitoring", "services", "cron", "alerts"]
+    description: "Check all stack service endpoints every 10 minutes — emails on failure"
+    entrypoint: sample_flows.py:services_health_check
+    work_pool:
+      name: default-pool
+    schedules:
+      - cron: "*/10 * * * *"
+        timezone: "UTC"
+        active: true
+
+  # ── Flow 3: Daily Summary Report — 06:00 UTC ─────────
+  - name: daily-report-06am
+    version: "2.0"
+    tags: ["report", "daily", "cron", "email"]
+    description: "Generate daily system summary report at 06:00 UTC and email it"
+    entrypoint: sample_flows.py:daily_summary_report
+    work_pool:
+      name: default-pool
+    schedules:
+      - cron: "0 6 * * *"
+        timezone: "UTC"
+        active: true
+
+  # ── Flow 4: Threshold Alert Check — every 15 min ─────
+  - name: threshold-alert-every-15-min
+    version: "1.0"
+    tags: ["monitoring", "alerts", "cron", "email"]
+    description: "Check CPU/RAM/Disk against thresholds every 15 min — emails if exceeded"
+    entrypoint: sample_flows.py:threshold_alert_check
+    work_pool:
+      name: default-pool
+    schedules:
+      - cron: "*/15 * * * *"
+        timezone: "UTC"
+        active: true
+
+  # ── Flow 5: Weekly Cleanup Report — Sunday 02:00 UTC ─
+  - name: weekly-cleanup-sunday-02am
+    version: "1.0"
+    tags: ["report", "weekly", "cron", "email"]
+    description: "Weekly system status and cleanup reminder every Sunday at 02:00 UTC"
+    entrypoint: sample_flows.py:weekly_cleanup_report
+    work_pool:
+      name: default-pool
+    schedules:
+      - cron: "0 2 * * 0"
+        timezone: "UTC"
+        active: true
+
+  # ── Flow 6: Kubernetes Health Check — every 15 min ───
+  - name: k8s-health-every-15-min
+    version: "1.0"
+    tags: ["monitoring", "kubernetes", "k3s", "cron", "alerts"]
+    description: "Check k3s cluster health every 15 minutes — emails on node/pod failures"
+    entrypoint: sample_flows.py:k8s_health_check
+    work_pool:
+      name: default-pool
+    schedules:
+      - cron: "*/15 * * * *"
+        timezone: "UTC"
+        active: true
+
+  # ── Flow 7: Docker Restart Monitor — every 10 min ────
+  - name: docker-restart-monitor-every-10-min
+    version: "1.0"
+    tags: ["monitoring", "docker", "cron", "alerts"]
+    description: "Monitor Docker containers for restarts and unhealthy status every 10 min"
+    entrypoint: sample_flows.py:docker_restart_monitor
+    work_pool:
+      name: default-pool
+    schedules:
+      - cron: "*/10 * * * *"
+        timezone: "UTC"
+        active: true

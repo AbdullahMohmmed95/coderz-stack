@@ -1,0 +1,118 @@
+{
+  "uid": "k3s-overview",
+  "title": "Kubernetes (k3s) Overview",
+  "description": "k3s cluster — pods, deployments, nodes, resource usage",
+  "tags": ["kubernetes", "k3s", "cluster"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Running Pods",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 0 }] } }
+      },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "count(kube_pod_status_phase{phase=\"Running\"})", "legendFormat": "Running Pods" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 2, "type": "stat", "title": "Total Pods",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "count(kube_pod_info)", "legendFormat": "Total Pods" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 3, "type": "stat", "title": "Deployments Ready",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "count(kube_deployment_status_replicas_ready > 0)", "legendFormat": "Ready" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 4, "type": "stat", "title": "Namespaces",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "count(kube_namespace_status_phase{phase=\"Active\"})", "legendFormat": "Namespaces" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 5, "type": "stat", "title": "Node Status",
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "count(kube_node_status_condition{condition=\"Ready\",status=\"true\"})", "legendFormat": "Ready Nodes" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 6, "type": "stat", "title": "Failed Pods",
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "count(kube_pod_status_phase{phase=~\"Failed|Unknown\"}) or vector(0)", "legendFormat": "Failed" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 7, "type": "table", "title": "Pods — Status by Namespace",
+      "gridPos": { "x": 0, "y": 4, "w": 14, "h": 8 },
+      "options": { "sortBy": [{ "displayName": "Namespace", "desc": false }], "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "left", "displayMode": "auto" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Phase" }, "properties": [{ "id": "custom.displayMode", "value": "color-text" }, { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } }] }
+        ]
+      },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "kube_pod_status_phase == 1", "legendFormat": "{{namespace}} / {{pod}} — {{phase}}", "instant": true, "format": "table" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "transformations": [
+        { "id": "organize", "options": { "renameByName": { "namespace": "Namespace", "pod": "Pod", "phase": "Phase" }, "excludeByName": { "Time": true, "Value": true, "__name__": true, "cluster": true, "job": true, "instance": true, "uid": true } } }
+      ]
+    },
+    {
+      "id": 8, "type": "table", "title": "Deployments — Ready vs Desired",
+      "gridPos": { "x": 14, "y": 4, "w": 10, "h": 8 },
+      "options": { "footer": { "show": false } },
+      "fieldConfig": { "defaults": { "custom": { "align": "left", "displayMode": "auto" } } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "kube_deployment_status_replicas_ready", "legendFormat": "{{namespace}}/{{deployment}}", "instant": true, "format": "table", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "kube_deployment_spec_replicas", "legendFormat": "{{namespace}}/{{deployment}}", "instant": true, "format": "table", "refId": "B" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "transformations": [
+        { "id": "merge", "options": {} },
+        { "id": "organize", "options": { "renameByName": { "namespace": "Namespace", "deployment": "Deployment", "Value #A": "Ready", "Value #B": "Desired" }, "excludeByName": { "Time": true, "__name__": true, "cluster": true, "job": true, "instance": true } } }
+      ]
+    },
+    {
+      "id": 9, "type": "timeseries", "title": "Pod Count Over Time",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 7 },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "count(kube_pod_status_phase{phase=\"Running\"})", "legendFormat": "Running" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "count(kube_pod_status_phase{phase=\"Pending\"}) or vector(0)", "legendFormat": "Pending" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "count(kube_pod_status_phase{phase=\"Failed\"}) or vector(0)", "legendFormat": "Failed" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 10, "type": "timeseries", "title": "Container Restarts (k3s)",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 7 },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "increase(kube_pod_container_status_restarts_total[1h]) > 0", "legendFormat": "{{namespace}}/{{container}}" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    }
+  ]
+}

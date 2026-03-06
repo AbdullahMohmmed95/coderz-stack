@@ -1,0 +1,125 @@
+{
+  "uid": "k6-results",
+  "title": "k6 — Load Test Results",
+  "description": "Real-time and historical k6 load test metrics pushed via Prometheus Remote Write",
+  "tags": ["k6", "load-test", "performance"],
+  "timezone": "browser",
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    { "id": 100, "type": "row", "title": "Test Overview", "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 1, "type": "stat", "title": "Total HTTP Requests",
+      "gridPos": { "x": 0, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_http_reqs_total) or vector(0)", "legendFormat": "HTTP Requests" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 2, "type": "stat", "title": "Request Rate",
+      "gridPos": { "x": 4, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "decimals": 1, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 100 }, { "color": "red", "value": 500 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(rate(k6_http_reqs_total[1m])) or vector(0)", "legendFormat": "Req/s" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 3, "type": "stat", "title": "P95 Response Time",
+      "gridPos": { "x": 8, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "ms", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 500 }, { "color": "red", "value": 1500 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_http_req_duration_p95) or vector(0)", "legendFormat": "P95" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 4, "type": "stat", "title": "HTTP Failures",
+      "gridPos": { "x": 12, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "decimals": 2, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.01 }, { "color": "red", "value": 0.05 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_http_req_failed) or vector(0)", "legendFormat": "Fail %" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 5, "type": "stat", "title": "Virtual Users (Peak)",
+      "gridPos": { "x": 16, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["max"] }, "colorMode": "value", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_vus) or vector(0)", "legendFormat": "Peak VUs" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 6, "type": "stat", "title": "Iterations",
+      "gridPos": { "x": 20, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_iterations_total) or vector(0)", "legendFormat": "Iterations" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+
+    { "id": 101, "type": "row", "title": "Virtual Users & Throughput", "gridPos": { "x": 0, "y": 5, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 7, "type": "timeseries", "title": "Virtual Users Over Time",
+      "gridPos": { "x": 0, "y": 6, "w": 12, "h": 8 },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 20, "gradientMode": "opacity" }, "color": { "fixedColor": "#f6c90e", "mode": "fixed" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_vus) or vector(0)", "legendFormat": "Virtual Users" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "HTTP Requests/sec",
+      "gridPos": { "x": 12, "y": 6, "w": 12, "h": 8 },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 15 }, "color": { "fixedColor": "#58a6ff", "mode": "fixed" } } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(rate(k6_http_reqs_total[30s])) or vector(0)", "legendFormat": "Req/s" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(rate(k6_iterations_total[30s])) or vector(0)", "legendFormat": "Iterations/s" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+
+    { "id": 102, "type": "row", "title": "Response Time Distribution", "gridPos": { "x": 0, "y": 14, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 9, "type": "timeseries", "title": "Latency Percentiles (p50 / p90 / p95 / p99)",
+      "gridPos": { "x": 0, "y": 15, "w": 16, "h": 8 },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 2, "fillOpacity": 5 } } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_http_req_duration_p50) or vector(0)", "legendFormat": "p50" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_http_req_duration_p90) or vector(0)", "legendFormat": "p90" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_http_req_duration_p95) or vector(0)", "legendFormat": "p95" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_http_req_duration_p99) or vector(0)", "legendFormat": "p99" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 10, "type": "timeseries", "title": "HTTP Failures & Checks",
+      "gridPos": { "x": 16, "y": 15, "w": 8, "h": 8 },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_http_req_failed) or vector(0)", "legendFormat": "Failure Rate" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_checks) or vector(0)", "legendFormat": "Checks Pass Rate" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+
+    { "id": 103, "type": "row", "title": "Request Phases", "gridPos": { "x": 0, "y": 23, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 11, "type": "timeseries", "title": "Request Phase Durations (avg)",
+      "gridPos": { "x": 0, "y": 24, "w": 24, "h": 8 },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 1, "fillOpacity": 8 } } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_http_req_connecting) or vector(0)", "legendFormat": "Connecting" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_http_req_tls_handshaking) or vector(0)", "legendFormat": "TLS Handshake" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_http_req_sending) or vector(0)", "legendFormat": "Sending" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_http_req_waiting) or vector(0)", "legendFormat": "Waiting (TTFB)" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "max(k6_http_req_receiving) or vector(0)", "legendFormat": "Receiving" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    }
+  ]
+}

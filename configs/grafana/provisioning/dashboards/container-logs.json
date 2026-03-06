@@ -1,0 +1,171 @@
+{
+  "uid": "container-logs",
+  "title": "Container Logs",
+  "description": "Live container logs from all Docker services — powered by Loki + Promtail",
+  "tags": ["logs", "loki", "docker", "containers"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "version": 10,
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "templating": {
+    "list": [
+      {
+        "name": "container",
+        "label": "Container",
+        "type": "query",
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "definition": "",
+        "query": {
+          "type": 1,
+          "label": "container",
+          "stream": "",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".+",
+        "current": { "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "search",
+        "label": "Search",
+        "type": "textbox",
+        "current": { "text": "", "value": "" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Active Log Streams",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background", "graphMode": "none", "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        }
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "count(sum by (container) (count_over_time({container=~\".+\"}[5m])))",
+        "legendFormat": "Containers",
+        "queryType": "instant"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+    {
+      "id": 2, "type": "stat", "title": "Log Rate (lines/min)",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background", "graphMode": "area", "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 1,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 100 },
+            { "color": "red", "value": 500 }
+          ]}
+        }
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "sum(rate({container=~\".+\"}[1m])) * 60",
+        "legendFormat": "Lines/min"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+    {
+      "id": 3, "type": "stat", "title": "Errors (last 5m)",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background", "graphMode": "area", "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 5 },
+            { "color": "red", "value": 20 }
+          ]}
+        }
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "sum(count_over_time({container=~\".+\"} |~ `(?i)(error|critical|fatal)` [5m]))",
+        "legendFormat": "Errors"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+    {
+      "id": 4, "type": "timeseries", "title": "Log Volume per Container",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "options": {
+        "tooltip": { "mode": "single" },
+        "legend": { "displayMode": "hidden" }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short",
+          "color": { "mode": "fixed", "fixedColor": "blue" },
+          "custom": { "lineWidth": 2, "fillOpacity": 30 },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        }
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "sum(rate({container=~\".+\"}[1m]))",
+        "legendFormat": "Lines/s"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+    {
+      "id": 5, "type": "logs", "title": "Container Logs — $container",
+      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 22 },
+      "options": {
+        "dedupStrategy": "none",
+        "showLabels": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "{container=~\"$container\"} |~ `(?i)${search}`",
+        "legendFormat": "",
+        "maxLines": 500
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "Log Rate per Container",
+      "gridPos": { "x": 0, "y": 26, "w": 24, "h": 8 },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "right" }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short",
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      },
+      "targets": [{
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "expr": "sum by (container) (rate({container=~\"$container\"}[1m]))",
+        "legendFormat": "{{container}}"
+      }],
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }
+    }
+  ]
+}

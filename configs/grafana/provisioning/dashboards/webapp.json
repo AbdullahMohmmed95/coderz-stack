@@ -1,0 +1,145 @@
+{
+  "uid": "coderz-webapp",
+  "title": "Web App — API Monitoring",
+  "description": "Request rate, latency, errors and DB metrics for the Coderz Web API",
+  "tags": ["webapp", "api", "monitoring"],
+  "timezone": "browser",
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    { "id": 100, "type": "row", "title": "Overview", "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 1, "type": "stat", "title": "Total Requests",
+      "gridPos": { "x": 0, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["sum"] }, "colorMode": "value", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "increase(http_requests_total{job=\"coderz-webapp\"}[30m])", "legendFormat": "Requests" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 2, "type": "stat", "title": "Request Rate (req/s)",
+      "gridPos": { "x": 4, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "decimals": 2, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 100 }, { "color": "red", "value": 500 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_requests_total{job=\"coderz-webapp\"}[1m]))", "legendFormat": "Req/s" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 3, "type": "stat", "title": "P95 Latency",
+      "gridPos": { "x": 8, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "ms", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 200 }, { "color": "red", "value": 500 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"coderz-webapp\"}[5m])) by (le)) * 1000", "legendFormat": "P95" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 4, "type": "stat", "title": "Error Rate",
+      "gridPos": { "x": 12, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "decimals": 2, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.01 }, { "color": "red", "value": 0.05 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_requests_total{job=\"coderz-webapp\",status_code=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"coderz-webapp\"}[5m]))", "legendFormat": "Error %" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 5, "type": "stat", "title": "Active Requests",
+      "gridPos": { "x": 16, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 50 }, { "color": "red", "value": 200 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "http_active_requests{job=\"coderz-webapp\"}", "legendFormat": "Active" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 6, "type": "stat", "title": "Avg Latency",
+      "gridPos": { "x": 20, "y": 1, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "ms", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 100 }, { "color": "red", "value": 300 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_request_duration_seconds_sum{job=\"coderz-webapp\"}[5m])) / sum(rate(http_request_duration_seconds_count{job=\"coderz-webapp\"}[5m])) * 1000", "legendFormat": "Avg" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+
+    { "id": 101, "type": "row", "title": "Request Throughput", "gridPos": { "x": 0, "y": 5, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 7, "type": "timeseries", "title": "Requests/sec by Endpoint",
+      "gridPos": { "x": 0, "y": 6, "w": 12, "h": 8 },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 8 } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_requests_total{job=\"coderz-webapp\"}[1m])) by (endpoint)", "legendFormat": "{{endpoint}}" }],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "HTTP Status Codes",
+      "gridPos": { "x": 12, "y": 6, "w": 12, "h": 8 },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 8 } } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_requests_total{job=\"coderz-webapp\",status_code=~\"2..\"}[1m]))", "legendFormat": "2xx Success" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_requests_total{job=\"coderz-webapp\",status_code=~\"4..\"}[1m]))", "legendFormat": "4xx Client Error" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_requests_total{job=\"coderz-webapp\",status_code=~\"5..\"}[1m]))", "legendFormat": "5xx Server Error" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+
+    { "id": 102, "type": "row", "title": "Latency Percentiles", "gridPos": { "x": 0, "y": 14, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 9, "type": "timeseries", "title": "Latency Percentiles (p50 / p95 / p99)",
+      "gridPos": { "x": 0, "y": 15, "w": 16, "h": 8 },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 2, "fillOpacity": 5 } } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"coderz-webapp\"}[5m])) by (le)) * 1000", "legendFormat": "p50" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"coderz-webapp\"}[5m])) by (le)) * 1000", "legendFormat": "p95" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"coderz-webapp\"}[5m])) by (le)) * 1000", "legendFormat": "p99" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 10, "type": "timeseries", "title": "Active Requests & Error Rate",
+      "gridPos": { "x": 16, "y": 15, "w": 8, "h": 8 },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "http_active_requests{job=\"coderz-webapp\"}", "legendFormat": "Active Reqs" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_errors_total{job=\"coderz-webapp\"}[1m])) * 60", "legendFormat": "Errors/min" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+
+    { "id": 103, "type": "row", "title": "Endpoint Breakdown", "gridPos": { "x": 0, "y": 23, "w": 24, "h": 1 }, "collapsed": false },
+    {
+      "id": 11, "type": "table", "title": "Requests by Endpoint",
+      "gridPos": { "x": 0, "y": 24, "w": 14, "h": 8 },
+      "options": { "footer": { "show": false }, "sortBy": [{ "displayName": "Req/s", "desc": true }] },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "left" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Req/s" }, "properties": [{ "id": "unit", "value": "reqps" }, { "id": "decimals", "value": 3 }] },
+          { "matcher": { "id": "byName", "options": "P95 (ms)" }, "properties": [{ "id": "unit", "value": "ms" }, { "id": "decimals", "value": 0 }] },
+          { "matcher": { "id": "byName", "options": "Error %" }, "properties": [{ "id": "unit", "value": "percent" }, { "id": "decimals", "value": 2 }, { "id": "custom.displayMode", "value": "color-background-solid" }, { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] } }] }
+        ]
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_requests_total{job=\"coderz-webapp\"}[5m])) by (endpoint)", "legendFormat": "{{endpoint}}", "instant": true, "format": "table", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"coderz-webapp\"}[5m])) by (endpoint, le)) * 1000", "legendFormat": "{{endpoint}}", "instant": true, "format": "table", "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_requests_total{job=\"coderz-webapp\",status_code=~\"[45]..\"}[5m])) by (endpoint) / sum(rate(http_requests_total{job=\"coderz-webapp\"}[5m])) by (endpoint) * 100", "legendFormat": "{{endpoint}}", "instant": true, "format": "table", "refId": "C" }
+      ],
+      "transformations": [
+        { "id": "merge", "options": {} },
+        { "id": "organize", "options": { "renameByName": { "endpoint": "Endpoint", "Value #A": "Req/s", "Value #B": "P95 (ms)", "Value #C": "Error %" }, "excludeByName": { "Time": true, "job": true, "instance": true } } }
+      ],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 12, "type": "timeseries", "title": "DB Query Duration by Type",
+      "gridPos": { "x": 14, "y": 24, "w": 10, "h": 8 },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 2, "fillOpacity": 8 } } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.95, sum(rate(db_query_duration_seconds_bucket{job=\"coderz-webapp\"}[5m])) by (query_type, le)) * 1000", "legendFormat": "{{query_type}} p95" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(db_query_duration_seconds_sum{job=\"coderz-webapp\"}[5m])) by (query_type) / sum(rate(db_query_duration_seconds_count{job=\"coderz-webapp\"}[5m])) by (query_type) * 1000", "legendFormat": "{{query_type}} avg" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    }
+  ]
+}

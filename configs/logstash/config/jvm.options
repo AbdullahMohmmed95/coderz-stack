@@ -1,0 +1,13 @@
+## JVM configuration — tuned for low-resource environment
+
+-Xms256m
+-Xmx256m
+
+-XX:+UseG1GC
+-XX:G1ReservePercent=25
+-XX:InitiatingHeapOccupancyPercent=30
+
+-Djava.awt.headless=true
+-Dfile.encoding=UTF-8
+-Djruby.compile.invokedynamic=true
+-XX:+HeapDumpOnOutOfMemoryError
