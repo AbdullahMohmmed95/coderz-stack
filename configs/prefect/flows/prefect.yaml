@@ -100,3 +100,18 @@ deployments:
       - cron: "*/10 * * * *"
         timezone: "UTC"
         active: true
+
+  # ── Flow 8: Full Stack Backup — daily at 03:00 AM ─────
+  - name: coderz-backup-daily
+    version: "1.0"
+    tags: ["backup", "cron", "critical"]
+    description: "Daily backup of PostgreSQL, Redis, Grafana, Elasticsearch, Configs, etcd (k3s + APISIX)"
+    entrypoint: backup_flow.py:backup_flow
+    work_pool:
+      name: default-pool
+    schedules:
+      - cron: "0 3 * * *"
+        timezone: "UTC"
+        active: true
+    parameters:
+      keep_days: 7
