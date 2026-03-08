@@ -577,7 +577,7 @@ services:
       - NAGIOSADMIN_USER=admin
       - NAGIOSADMIN_PASS=coderz123
     volumes:
-      - ./configs/nagios:/etc/nagios4/conf.d/coderz:ro
+      - ./configs/nagios/objects:/opt/nagios/etc/conf.d/coderz:ro
       - ./configs/nagios/cgi.cfg:/opt/nagios/etc/cgi.cfg:ro
       - /proc:/hostfs/proc:ro
       - /sys:/hostfs/sys:ro
