@@ -1,0 +1,762 @@
+{
+  "uid": "otel-logs",
+  "title": "OpenTelemetry — Logs & Traces",
+  "description": "Structured logs and trace spans from the .NET API via the OTel Collector → Elasticsearch",
+  "tags": ["opentelemetry", "otel", "logs", "traces", "dotnet"],
+  "timezone": "browser",
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "templating": {
+    "list": [
+      {
+        "name": "severity",
+        "label": "Severity",
+        "type": "custom",
+        "query": "ALL : *,INFO : INFO,WARN : WARN,ERROR : ERROR,DEBUG : DEBUG",
+        "current": { "text": "ALL", "value": "*" },
+        "options": [
+          { "text": "ALL",   "value": "*",     "selected": true },
+          { "text": "INFO",  "value": "INFO",  "selected": false },
+          { "text": "WARN",  "value": "WARN",  "selected": false },
+          { "text": "ERROR", "value": "ERROR", "selected": false },
+          { "text": "DEBUG", "value": "DEBUG", "selected": false }
+        ],
+        "includeAll": false,
+        "multi": false,
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Overview",
+      "type": "row"
+    },
+
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Logs",
+      "gridPos": { "x": 0, "y": 1, "w": 4, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["sum"] },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "blue", "value": null }]
+          }
+        }
+      },
+      "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+          "query": "*",
+          "metrics": [{ "id": "1", "type": "count" }],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "@timestamp",
+              "settings": { "interval": "auto", "min_doc_count": "0" }
+            }
+          ],
+          "alias": "Total"
+        }
+      ]
+    },
+
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Errors",
+      "gridPos": { "x": 4, "y": 1, "w": 4, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["sum"] },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red",   "value": 1 }
+            ]
+          }
+        }
+      },
+      "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+          "query": "SeverityText:ERROR",
+          "metrics": [{ "id": "1", "type": "count" }],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "@timestamp",
+              "settings": { "interval": "auto", "min_doc_count": "0" }
+            }
+          ],
+          "alias": "Errors"
+        }
+      ]
+    },
+
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Warnings",
+      "gridPos": { "x": 8, "y": 1, "w": 4, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["sum"] },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green",  "value": null },
+              { "color": "yellow", "value": 1 }
+            ]
+          }
+        }
+      },
+      "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+          "query": "SeverityText:WARN",
+          "metrics": [{ "id": "1", "type": "count" }],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "@timestamp",
+              "settings": { "interval": "auto", "min_doc_count": "0" }
+            }
+          ],
+          "alias": "Warnings"
+        }
+      ]
+    },
+
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Unique Trace IDs",
+      "gridPos": { "x": 12, "y": 1, "w": 4, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "purple", "value": null }]
+          }
+        }
+      },
+      "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+          "query": "TraceId:*",
+          "metrics": [{ "id": "1", "type": "cardinality", "field": "TraceId" }],
+          "bucketAggs": [],
+          "alias": "Unique Traces"
+        }
+      ]
+    },
+
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Total Trace Spans",
+      "gridPos": { "x": 16, "y": 1, "w": 4, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["sum"] },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        }
+      },
+      "datasource": { "type": "elasticsearch", "uid": "OTEL_TRACES_ES" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_TRACES_ES" },
+          "query": "*",
+          "metrics": [{ "id": "1", "type": "count" }],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "@timestamp",
+              "settings": { "interval": "auto", "min_doc_count": "0" }
+            }
+          ],
+          "alias": "Spans"
+        }
+      ]
+    },
+
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Error Spans (5xx)",
+      "gridPos": { "x": 20, "y": 1, "w": 4, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["sum"] },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "auto",
+        "orientation": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red",   "value": 1 }
+            ]
+          }
+        }
+      },
+      "datasource": { "type": "elasticsearch", "uid": "OTEL_TRACES_ES" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_TRACES_ES" },
+          "query": "Status.Code:Error",
+          "metrics": [{ "id": "1", "type": "count" }],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "@timestamp",
+              "settings": { "interval": "auto", "min_doc_count": "0" }
+            }
+          ],
+          "alias": "Error Spans"
+        }
+      ]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 101,
+      "title": "Log Volume Over Time",
+      "type": "row"
+    },
+
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Log Rate by Severity",
+      "gridPos": { "x": 0, "y": 6, "w": 24, "h": 8 },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "none" },
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum", "max"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "spanNulls": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "ERROR" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#E02F44", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "WARN" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#FF9830", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "INFO" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#5794F2", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "DEBUG" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "#9FA7B3", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+          "query": "SeverityText:ERROR",
+          "metrics": [{ "id": "1", "type": "count" }],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "@timestamp",
+              "settings": { "interval": "auto", "min_doc_count": "0", "trimEdges": "0" }
+            }
+          ],
+          "alias": "ERROR"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+          "query": "SeverityText:WARN",
+          "metrics": [{ "id": "1", "type": "count" }],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "@timestamp",
+              "settings": { "interval": "auto", "min_doc_count": "0", "trimEdges": "0" }
+            }
+          ],
+          "alias": "WARN"
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+          "query": "SeverityText:INFO",
+          "metrics": [{ "id": "1", "type": "count" }],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "@timestamp",
+              "settings": { "interval": "auto", "min_doc_count": "0", "trimEdges": "0" }
+            }
+          ],
+          "alias": "INFO"
+        },
+        {
+          "refId": "D",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+          "query": "SeverityText:DEBUG",
+          "metrics": [{ "id": "1", "type": "count" }],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "@timestamp",
+              "settings": { "interval": "auto", "min_doc_count": "0", "trimEdges": "0" }
+            }
+          ],
+          "alias": "DEBUG"
+        }
+      ]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "id": 102,
+      "title": "Live Log Stream",
+      "type": "row"
+    },
+
+    {
+      "id": 20,
+      "type": "logs",
+      "title": "OTel Logs — Live Stream",
+      "description": "Structured logs from the .NET API via OTel Collector. Each line carries a TraceId and SpanId for correlation.",
+      "gridPos": { "x": 0, "y": 15, "w": 24, "h": 14 },
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      },
+      "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+          "query": "SeverityText:${severity}",
+          "metrics": [{ "id": "1", "type": "logs", "settings": { "limit": "500" } }],
+          "bucketAggs": [],
+          "alias": ""
+        }
+      ]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 },
+      "id": 103,
+      "title": "Recent Logs Table",
+      "type": "row"
+    },
+
+    {
+      "id": 30,
+      "type": "table",
+      "title": "Last 100 Log Entries",
+      "gridPos": { "x": 0, "y": 30, "w": 24, "h": 10 },
+      "options": {
+        "footer": { "show": false },
+        "frameIndex": 0,
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto", "displayMode": "auto", "inspect": false }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "SeverityText" },
+            "properties": [
+              { "id": "custom.width", "value": 90 },
+              { "id": "custom.displayMode", "value": "color-background" },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "ERROR": { "color": "red",    "index": 0, "text": "ERROR" } } },
+                  { "type": "value", "options": { "WARN":  { "color": "orange", "index": 1, "text": "WARN"  } } },
+                  { "type": "value", "options": { "INFO":  { "color": "blue",   "index": 2, "text": "INFO"  } } },
+                  { "type": "value", "options": { "DEBUG": { "color": "gray",   "index": 3, "text": "DEBUG" } } }
+                ]
+              }
+            ]
+          },
+          { "matcher": { "id": "byName", "options": "@timestamp" }, "properties": [{ "id": "custom.width", "value": 180 }] },
+          { "matcher": { "id": "byName", "options": "TraceId" },    "properties": [{ "id": "custom.width", "value": 260 }] },
+          { "matcher": { "id": "byName", "options": "SpanId" },     "properties": [{ "id": "custom.width", "value": 180 }] },
+          { "matcher": { "id": "byName", "options": "Body" },       "properties": [{ "id": "custom.width", "value": 600 }] }
+        ]
+      },
+      "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+          "query": "SeverityText:${severity}",
+          "metrics": [{ "id": "1", "type": "raw_data", "settings": { "size": "100" } }],
+          "bucketAggs": [],
+          "alias": ""
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true,
+              "_index": true,
+              "_type": true,
+              "SeverityNumber": true,
+              "Resource.telemetry.sdk.language": true,
+              "Resource.telemetry.sdk.name": true,
+              "Resource.telemetry.sdk.version": true
+            },
+            "renameByName": {
+              "@timestamp": "Time",
+              "Body": "Message",
+              "SeverityText": "Level",
+              "TraceId": "Trace ID",
+              "SpanId": "Span ID",
+              "Resource.service.name": "Service",
+              "Resource.deployment.environment": "Env"
+            },
+            "indexByName": {
+              "@timestamp": 0,
+              "SeverityText": 1,
+              "Body": 2,
+              "TraceId": 3,
+              "SpanId": 4,
+              "Resource.service.name": 5
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 40 },
+      "id": 104,
+      "title": "Errors & Warnings",
+      "type": "row"
+    },
+
+    {
+      "id": 40,
+      "type": "table",
+      "title": "Error & Warning Logs",
+      "gridPos": { "x": 0, "y": 41, "w": 24, "h": 8 },
+      "options": {
+        "footer": { "show": false },
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto", "displayMode": "auto" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "@timestamp" }, "properties": [{ "id": "custom.width", "value": 180 }] },
+          { "matcher": { "id": "byName", "options": "TraceId" },    "properties": [{ "id": "custom.width", "value": 260 }] },
+          {
+            "matcher": { "id": "byName", "options": "SeverityText" },
+            "properties": [
+              { "id": "custom.width", "value": 90 },
+              { "id": "custom.displayMode", "value": "color-background" },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "ERROR": { "color": "red",    "index": 0, "text": "ERROR" } } },
+                  { "type": "value", "options": { "WARN":  { "color": "orange", "index": 1, "text": "WARN"  } } }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_LOGS_ES" },
+          "query": "SeverityText:(ERROR OR WARN)",
+          "metrics": [{ "id": "1", "type": "raw_data", "settings": { "size": "50" } }],
+          "bucketAggs": [],
+          "alias": ""
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true, "_index": true, "_type": true,
+              "SeverityNumber": true,
+              "Resource.telemetry.sdk.language": true,
+              "Resource.telemetry.sdk.name": true,
+              "Resource.telemetry.sdk.version": true,
+              "Resource.deployment.environment": true
+            },
+            "renameByName": {
+              "@timestamp": "Time",
+              "Body": "Error Message",
+              "SeverityText": "Level",
+              "TraceId": "Trace ID",
+              "SpanId": "Span ID",
+              "Resource.service.name": "Service"
+            },
+            "indexByName": {
+              "@timestamp": 0,
+              "SeverityText": 1,
+              "Body": 2,
+              "TraceId": 3,
+              "SpanId": 4
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 49 },
+      "id": 105,
+      "title": "Traces",
+      "type": "row"
+    },
+
+    {
+      "id": 50,
+      "type": "timeseries",
+      "title": "Trace Span Rate",
+      "gridPos": { "x": 0, "y": 50, "w": 16, "h": 8 },
+      "options": {
+        "tooltip": { "mode": "single", "sort": "none" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "palette-classic" },
+          "custom": { "lineWidth": 2, "fillOpacity": 10, "spanNulls": true }
+        }
+      },
+      "datasource": { "type": "elasticsearch", "uid": "OTEL_TRACES_ES" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_TRACES_ES" },
+          "query": "*",
+          "metrics": [{ "id": "1", "type": "count" }],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "date_histogram",
+              "field": "@timestamp",
+              "settings": { "interval": "auto", "min_doc_count": "0" }
+            }
+          ],
+          "alias": "Spans"
+        }
+      ]
+    },
+
+    {
+      "id": 51,
+      "type": "piechart",
+      "title": "Spans by HTTP Route",
+      "gridPos": { "x": 16, "y": 50, "w": 8, "h": 8 },
+      "options": {
+        "pieType": "donut",
+        "legend": { "displayMode": "table", "placement": "right", "values": ["value", "percent"] },
+        "tooltip": { "mode": "single" }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "palette-classic" } }
+      },
+      "datasource": { "type": "elasticsearch", "uid": "OTEL_TRACES_ES" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_TRACES_ES" },
+          "query": "*",
+          "metrics": [{ "id": "1", "type": "count" }],
+          "bucketAggs": [
+            {
+              "id": "2",
+              "type": "terms",
+              "field": "Attributes.http.route.keyword",
+              "settings": { "size": "10", "order": "desc", "orderBy": "1" }
+            }
+          ],
+          "alias": ""
+        }
+      ]
+    },
+
+    {
+      "id": 52,
+      "type": "table",
+      "title": "Recent Trace Spans",
+      "gridPos": { "x": 0, "y": 58, "w": 24, "h": 10 },
+      "options": { "footer": { "show": false }, "showHeader": true, "cellHeight": "sm" },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto", "displayMode": "auto" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "@timestamp" },                   "properties": [{ "id": "custom.width", "value": 180 }] },
+          { "matcher": { "id": "byName", "options": "TraceId" },                      "properties": [{ "id": "custom.width", "value": 260 }] },
+          { "matcher": { "id": "byName", "options": "SpanId" },                       "properties": [{ "id": "custom.width", "value": 180 }] },
+          { "matcher": { "id": "byName", "options": "Name" },                         "properties": [{ "id": "custom.width", "value": 280 }] },
+          { "matcher": { "id": "byName", "options": "Attributes.http.status_code" },  "properties": [{ "id": "custom.width", "value": 90  }] }
+        ]
+      },
+      "datasource": { "type": "elasticsearch", "uid": "OTEL_TRACES_ES" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "OTEL_TRACES_ES" },
+          "query": "*",
+          "metrics": [{ "id": "1", "type": "raw_data", "settings": { "size": "100" } }],
+          "bucketAggs": [],
+          "alias": ""
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true, "_index": true, "_type": true,
+              "Resource.telemetry.sdk.language": true,
+              "Resource.telemetry.sdk.name": true,
+              "Resource.telemetry.sdk.version": true,
+              "Links": true,
+              "Events": true
+            },
+            "renameByName": {
+              "@timestamp": "Start Time",
+              "Name": "Operation",
+              "TraceId": "Trace ID",
+              "SpanId": "Span ID",
+              "ParentSpanId": "Parent Span",
+              "Attributes.http.method": "Method",
+              "Attributes.http.route": "Route",
+              "Attributes.http.status_code": "Status",
+              "Resource.service.name": "Service"
+            },
+            "indexByName": {
+              "@timestamp": 0,
+              "Name": 1,
+              "Attributes.http.method": 2,
+              "Attributes.http.route": 3,
+              "Attributes.http.status_code": 4,
+              "TraceId": 5,
+              "SpanId": 6
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

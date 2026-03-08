@@ -29,6 +29,30 @@ datasources:
       esVersion: "8.0.0"
     editable: true
 
+  - name: OTel Logs
+    uid: OTEL_LOGS_ES
+    type: elasticsearch
+    access: proxy
+    url: http://elasticsearch:9200
+    database: "coderz-otel-logs*"
+    jsonData:
+      timeField: "@timestamp"
+      esVersion: "8.0.0"
+      logMessageField: "Body"
+      logLevelField: "SeverityText"
+    editable: true
+
+  - name: OTel Traces
+    uid: OTEL_TRACES_ES
+    type: elasticsearch
+    access: proxy
+    url: http://elasticsearch:9200
+    database: "coderz-otel-traces*"
+    jsonData:
+      timeField: "@timestamp"
+      esVersion: "8.0.0"
+    editable: true
+
   - name: CoderAPI DB
     uid: PGSQL_CODERAPI
     type: postgres
