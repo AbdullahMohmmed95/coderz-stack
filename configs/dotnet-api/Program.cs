@@ -1,9 +1,63 @@
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Prometheus;
 using CoderApi.Data;
 using CoderApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ── OpenTelemetry ─────────────────────────────────────────────────────────
+var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]
+                   ?? "http://otel-collector:4317";
+
+var resourceBuilder = ResourceBuilder.CreateDefault()
+    .AddService("coderz-dotnet-api", serviceVersion: "1.0.0")
+    .AddAttributes(new Dictionary<string, object>
+    {
+        ["deployment.environment"] = builder.Environment.EnvironmentName.ToLower()
+    });
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .SetResourceBuilder(resourceBuilder)
+        .AddAspNetCoreInstrumentation(opts =>
+        {
+            // Skip internal/noisy endpoints from tracing
+            opts.Filter = ctx => ctx.Request.Path.Value is not ("/metrics" or "/health" or "/api/health");
+        })
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation(opts => opts.SetDbStatementForText = true)
+        .AddOtlpExporter(opts =>
+        {
+            opts.Endpoint = new Uri(otlpEndpoint);
+            opts.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+        }))
+    .WithMetrics(metrics => metrics
+        .SetResourceBuilder(resourceBuilder)
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddOtlpExporter(opts =>
+        {
+            opts.Endpoint = new Uri(otlpEndpoint);
+            opts.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+        }));
+
+// OTel Logging (sends structured logs to collector alongside existing console/Filebeat flow)
+builder.Logging.AddOpenTelemetry(logging =>
+{
+    logging.SetResourceBuilder(resourceBuilder);
+    logging.IncludeFormattedMessage = true;
+    logging.IncludeScopes = true;
+    logging.AddOtlpExporter(opts =>
+    {
+        opts.Endpoint = new Uri(otlpEndpoint);
+        opts.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.Grpc;
+    });
+});
 
 // Controllers + Swagger
 builder.Services.AddControllers();

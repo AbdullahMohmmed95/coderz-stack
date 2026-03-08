@@ -229,6 +229,27 @@ services:
     networks:
       - coderz-net
 
+  # ── OpenTelemetry Collector ───────────────────────────
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.103.0
+    container_name: coderz-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otel/config.yml"]
+    volumes:
+      - ./configs/otel-collector/config.yml:/etc/otel/config.yml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - coderz-net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+
   # ── cAdvisor (Docker container metrics) ───────────────
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
@@ -344,6 +365,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /root/.kube:/root/.kube:ro
       - /usr/local/bin/kubectl:/usr/local/bin/kubectl:ro
+      - /opt/coderz:/opt/coderz
     depends_on:
       - prefect-server
     networks:
@@ -400,6 +422,12 @@ services:
         echo '[kibana-setup] Creating api-logs-* data view...';
         curl -sf -X POST http://kibana:5601/api/data_views/data_view -H 'Content-Type: application/json' -H 'kbn-xsrf: true' -d '{"data_view":{"id":"coderz-api-logs-dv","title":"api-logs-*","timeFieldName":"@timestamp","name":"API Request Logs"}}';
         echo '';
+        echo '[kibana-setup] Creating coderz-otel-traces data view (OpenTelemetry traces)...';
+        curl -sf -X POST http://kibana:5601/api/data_views/data_view -H 'Content-Type: application/json' -H 'kbn-xsrf: true' -d '{"data_view":{"id":"coderz-otel-traces-dv","title":"coderz-otel-traces*","timeFieldName":"@timestamp","name":"OTel Traces"}}';
+        echo '';
+        echo '[kibana-setup] Creating coderz-otel-logs data view (OpenTelemetry logs)...';
+        curl -sf -X POST http://kibana:5601/api/data_views/data_view -H 'Content-Type: application/json' -H 'kbn-xsrf: true' -d '{"data_view":{"id":"coderz-otel-logs-dv","title":"coderz-otel-logs*","timeFieldName":"@timestamp","name":"OTel Logs"}}';
+        echo '';
         echo '[kibana-setup] Importing .NET API dashboard...';
         curl -sf -X POST 'http://kibana:5601/api/saved_objects/_import?overwrite=true' -H 'kbn-xsrf: true' -F "file=@/tmp/dotnet-api-dashboard.ndjson";
         echo '';
@@ -442,6 +470,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__DefaultConnection=Host=coderz-db;Database=coderapi;Username=coderapi;Password=coderapi_2024
       - ConnectionStrings__Redis=coderz-redis:6379
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
     ports:
       - "5050:8080"
     depends_on:
@@ -449,6 +478,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     networks:
       - coderz-net
     healthcheck:
