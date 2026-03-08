@@ -1,0 +1,376 @@
+{
+  "uid": "api-traffic-monitor",
+  "title": "API Traffic Monitor — Live Request Tracker",
+  "description": "Full visibility: every API request, success/failure rates, per-endpoint breakdown, live error logs. Built for high-traffic (1M+ req/min).",
+  "tags": ["api", "traffic", "monitor", "errors", "latency"],
+  "timezone": "browser",
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "version": 2,
+  "time": { "from": "now-15m", "to": "now" },
+  "panels": [
+
+    { "id": 1003, "type": "row", "title": ".NET API — Per Endpoint Deep Dive", "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }, "collapsed": false },
+
+    {
+      "id": 30, "type": "stat", "title": ".NET Req/s",
+      "gridPos": { "x": 0, "y": 1, "w": 3, "h": 3 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "decimals": 1, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_requests_received_total{job=\"coderz-dotnet-api\"}[1m]))", "refId": "A" }]
+    },
+
+    {
+      "id": 31, "type": "stat", "title": ".NET P95 Latency",
+      "gridPos": { "x": 3, "y": 1, "w": 3, "h": 3 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "s", "decimals": 3, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.2 }, { "color": "red", "value": 1 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"coderz-dotnet-api\"}[5m])) by (le))", "refId": "A" }]
+    },
+
+    {
+      "id": 32, "type": "stat", "title": ".NET P99 Latency",
+      "gridPos": { "x": 6, "y": 1, "w": 3, "h": 3 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "s", "decimals": 3, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.5 }, { "color": "red", "value": 2 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"coderz-dotnet-api\"}[5m])) by (le))", "refId": "A" }]
+    },
+
+    {
+      "id": 33, "type": "stat", "title": ".NET Error Rate",
+      "gridPos": { "x": 9, "y": 1, "w": 3, "h": 3 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "100 * sum(rate(http_requests_received_total{job=\"coderz-dotnet-api\", code=~\"[45]..\"}[1m])) / sum(rate(http_requests_received_total{job=\"coderz-dotnet-api\"}[1m]))", "refId": "A" }]
+    },
+
+    {
+      "id": 34, "type": "stat", "title": ".NET Active Requests",
+      "gridPos": { "x": 12, "y": 1, "w": 3, "h": 3 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(http_requests_in_progress{job=\"coderz-dotnet-api\"})", "refId": "A" }]
+    },
+
+    {
+      "id": 35, "type": "timeseries", "title": ".NET Request Rate by Endpoint (req/s)",
+      "description": "Which endpoint gets the most load — watch for imbalances",
+      "gridPos": { "x": 15, "y": 1, "w": 9, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] } },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 5 } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum by (endpoint, method) (rate(http_requests_received_total{job=\"coderz-dotnet-api\", endpoint!=\"\"}[1m]))", "legendFormat": "{{method}} {{endpoint}}", "refId": "A" }]
+    },
+
+    {
+      "id": 36, "type": "table", "title": ".NET Endpoint Stats — Req/s, Latency, Errors",
+      "description": "Every endpoint: traffic + error count + P95 latency. Click column headers to sort.",
+      "gridPos": { "x": 0, "y": 4, "w": 15, "h": 9 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "sortBy": [{ "desc": true, "displayName": "Req/s" }], "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Req/s" }, "properties": [{ "id": "unit", "value": "reqps" }, { "id": "decimals", "value": 3 }, { "id": "custom.width", "value": 90 }] },
+          { "matcher": { "id": "byName", "options": "Errors/min" }, "properties": [{ "id": "unit", "value": "short" }, { "id": "custom.width", "value": 100 }, { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } }, { "id": "custom.displayMode", "value": "color-background" }] },
+          { "matcher": { "id": "byName", "options": "P95 Latency" }, "properties": [{ "id": "unit", "value": "s" }, { "id": "decimals", "value": 3 }, { "id": "custom.width", "value": 110 }, { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.2 }, { "color": "red", "value": 1 }] } }, { "id": "custom.displayMode", "value": "color-background" }] }
+        ]
+      },
+      "transformations": [
+        { "id": "merge", "options": {} },
+        { "id": "organize", "options": { "renameByName": { "endpoint": "Endpoint", "method": "Method", "controller": "Controller", "Value #ReqRate": "Req/s", "Value #Errors": "Errors/min", "Value #P95": "P95 Latency" } } }
+      ],
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum by (endpoint, method, controller) (rate(http_requests_received_total{job=\"coderz-dotnet-api\", endpoint!=\"\"}[1m]))", "legendFormat": "{{endpoint}}", "refId": "ReqRate", "instant": true, "format": "table" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum by (endpoint, method) (rate(http_requests_received_total{job=\"coderz-dotnet-api\", endpoint!=\"\", code=~\"[45]..\"}[1m])) * 60", "legendFormat": "{{endpoint}}", "refId": "Errors", "instant": true, "format": "table" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.95, sum by (endpoint, le) (rate(http_request_duration_seconds_bucket{job=\"coderz-dotnet-api\"}[5m])))", "legendFormat": "{{endpoint}}", "refId": "P95", "instant": true, "format": "table" }
+      ]
+    },
+
+    {
+      "id": 37, "type": "timeseries", "title": ".NET Error Rate by Endpoint (%)",
+      "description": "Spot which specific endpoint is failing",
+      "gridPos": { "x": 15, "y": 8, "w": 9, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "custom": { "lineWidth": 2, "fillOpacity": 5 }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 5 }] } }
+      },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "100 * sum by (endpoint, method) (rate(http_requests_received_total{job=\"coderz-dotnet-api\", endpoint!=\"\", code=~\"[45]..\"}[2m])) / sum by (endpoint, method) (rate(http_requests_received_total{job=\"coderz-dotnet-api\", endpoint!=\"\"}[2m]))", "legendFormat": "{{method}} {{endpoint}}", "refId": "A" }]
+    },
+
+    { "id": 1000, "type": "row", "title": "APISIX Gateway — Entry Point (All Traffic)", "gridPos": { "x": 0, "y": 13, "w": 24, "h": 1 }, "collapsed": false },
+
+    {
+      "id": 1, "type": "stat", "title": "Requests / min",
+      "description": "Total requests hitting the gateway per minute",
+      "gridPos": { "x": 0, "y": 14, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "auto", "orientation": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        }
+      },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "round(sum(rate(apisix_http_requests_total{job=\"apisix-gateway\"}[1m])) * 60)", "legendFormat": "req/min", "refId": "A" }]
+    },
+
+    {
+      "id": 2, "type": "stat", "title": "Success Rate %",
+      "description": "% of 2xx responses from gateway",
+      "gridPos": { "x": 4, "y": 14, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto", "orientation": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "decimals": 2,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 90 }, { "color": "green", "value": 99 }] }
+        }
+      },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "100 * sum(rate(apisix_http_status{job=\"apisix-gateway\", code=~\"2..\"}[1m])) / sum(rate(apisix_http_status{job=\"apisix-gateway\"}[1m]))", "legendFormat": "success%", "refId": "A" }]
+    },
+
+    {
+      "id": 3, "type": "stat", "title": "4xx Client Errors / min",
+      "description": "Bad requests, not found, unauthorized, etc.",
+      "gridPos": { "x": 8, "y": 14, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "auto", "orientation": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 50 }, { "color": "orange", "value": 500 }] }
+        }
+      },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "round(sum(rate(apisix_http_status{job=\"apisix-gateway\", code=~\"4..\"}[1m])) * 60)", "legendFormat": "4xx/min", "refId": "A" }]
+    },
+
+    {
+      "id": 4, "type": "stat", "title": "5xx Server Errors / min",
+      "description": "Internal server errors — needs immediate attention",
+      "gridPos": { "x": 12, "y": 14, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "auto", "orientation": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 10 }] }
+        }
+      },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "round(sum(rate(apisix_http_status{job=\"apisix-gateway\", code=~\"5..\"}[1m])) * 60)", "legendFormat": "5xx/min", "refId": "A" }]
+    },
+
+    {
+      "id": 5, "type": "stat", "title": "Gateway P95 Latency",
+      "description": "95th percentile request latency at the gateway (ms)",
+      "gridPos": { "x": 16, "y": 14, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto", "orientation": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms", "decimals": 1,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 200 }, { "color": "red", "value": 1000 }] }
+        }
+      },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.95, sum(rate(apisix_http_latency_bucket{job=\"apisix-gateway\", type=\"apisix\"}[5m])) by (le))", "legendFormat": "p95 ms", "refId": "A" }]
+    },
+
+    {
+      "id": 6, "type": "stat", "title": "Gateway P99 Latency",
+      "description": "99th percentile — worst-case response time",
+      "gridPos": { "x": 20, "y": 14, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto", "orientation": "auto" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms", "decimals": 1,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 500 }, { "color": "red", "value": 2000 }] }
+        }
+      },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.99, sum(rate(apisix_http_latency_bucket{job=\"apisix-gateway\", type=\"apisix\"}[5m])) by (le))", "legendFormat": "p99 ms", "refId": "A" }]
+    },
+
+    { "id": 1001, "type": "row", "title": "Traffic Flow — Requests Over Time", "gridPos": { "x": 0, "y": 18, "w": 24, "h": 1 }, "collapsed": false },
+
+    {
+      "id": 10, "type": "timeseries", "title": "Request Rate by Route (req/min)",
+      "description": "How many requests each route receives per minute — spot which endpoint is hottest",
+      "gridPos": { "x": 0, "y": 19, "w": 14, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] } },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 10 } }
+      },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum by (route, matched_uri) (rate(apisix_http_status{job=\"apisix-gateway\"}[1m])) * 60", "legendFormat": "{{route}} {{matched_uri}}", "refId": "A" }]
+    },
+
+    {
+      "id": 11, "type": "timeseries", "title": "2xx vs 4xx vs 5xx Over Time (req/min)",
+      "description": "Success vs client-error vs server-error — see problems the moment they happen",
+      "gridPos": { "x": 14, "y": 19, "w": 10, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "tooltip": { "mode": "multi", "sort": "none" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 20 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "2xx Success" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "4xx Client Error" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "5xx Server Error" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+        ]
+      },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(apisix_http_status{job=\"apisix-gateway\", code=~\"2..\"}[1m])) * 60", "legendFormat": "2xx Success", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(apisix_http_status{job=\"apisix-gateway\", code=~\"4..\"}[1m])) * 60", "legendFormat": "4xx Client Error", "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(apisix_http_status{job=\"apisix-gateway\", code=~\"5..\"}[1m])) * 60", "legendFormat": "5xx Server Error", "refId": "C" }
+      ]
+    },
+
+    { "id": 1002, "type": "row", "title": "Per-Route Breakdown — Who Gets What", "gridPos": { "x": 0, "y": 27, "w": 24, "h": 1 }, "collapsed": false },
+
+    {
+      "id": 20, "type": "table", "title": "Route Traffic Table — Req/min + Status Codes",
+      "description": "Every gateway route: how many requests, how many succeed, how many fail",
+      "gridPos": { "x": 0, "y": 28, "w": 14, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "sortBy": [{ "desc": true, "displayName": "Total req/min" }], "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Total req/min" }, "properties": [{ "id": "unit", "value": "short" }, { "id": "custom.width", "value": 130 }] },
+          { "matcher": { "id": "byName", "options": "Success %" }, "properties": [{ "id": "unit", "value": "percent" }, { "id": "custom.width", "value": 100 }, { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 90 }, { "color": "green", "value": 99 }] } }, { "id": "custom.displayMode", "value": "color-background" }] },
+          { "matcher": { "id": "byName", "options": "5xx/min" }, "properties": [{ "id": "unit", "value": "short" }, { "id": "custom.width", "value": 90 }, { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } }, { "id": "custom.displayMode", "value": "color-background" }] }
+        ]
+      },
+      "transformations": [
+        { "id": "merge", "options": {} },
+        { "id": "organize", "options": { "renameByName": { "route": "Route", "matched_uri": "URI Pattern", "Value #Total": "Total req/min", "Value #2xx": "2xx/min", "Value #4xx": "4xx/min", "Value #5xx": "5xx/min", "Value #SuccessPct": "Success %" } } }
+      ],
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum by (route, matched_uri) (rate(apisix_http_status{job=\"apisix-gateway\"}[1m])) * 60", "legendFormat": "{{route}} | {{matched_uri}}", "refId": "Total", "instant": true, "format": "table" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum by (route, matched_uri) (rate(apisix_http_status{job=\"apisix-gateway\", code=~\"2..\"}[1m])) * 60", "legendFormat": "{{route}}", "refId": "2xx", "instant": true, "format": "table" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum by (route, matched_uri) (rate(apisix_http_status{job=\"apisix-gateway\", code=~\"4..\"}[1m])) * 60", "legendFormat": "{{route}}", "refId": "4xx", "instant": true, "format": "table" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum by (route, matched_uri) (rate(apisix_http_status{job=\"apisix-gateway\", code=~\"5..\"}[1m])) * 60", "legendFormat": "{{route}}", "refId": "5xx", "instant": true, "format": "table" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "100 * sum by (route, matched_uri) (rate(apisix_http_status{job=\"apisix-gateway\", code=~\"2..\"}[1m])) / sum by (route, matched_uri) (rate(apisix_http_status{job=\"apisix-gateway\"}[1m]))", "legendFormat": "{{route}}", "refId": "SuccessPct", "instant": true, "format": "table" }
+      ]
+    },
+
+    {
+      "id": 21, "type": "bargauge", "title": "Requests by HTTP Status Code",
+      "description": "See exactly which status codes are being returned right now",
+      "gridPos": { "x": 14, "y": 28, "w": 10, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "orientation": "horizontal", "reduceOptions": { "calcs": ["lastNotNull"] }, "displayMode": "gradient", "valueMode": "color", "showUnfilled": true, "minVizHeight": 10 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short", "decimals": 0,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 10 }, { "color": "red", "value": 100 }] }
+        }
+      },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum by (code) (rate(apisix_http_status{job=\"apisix-gateway\"}[1m])) * 60", "legendFormat": "HTTP {{code}}", "refId": "A", "instant": true }]
+    },
+
+    { "id": 1004, "type": "row", "title": "WebApp API", "gridPos": { "x": 0, "y": 36, "w": 24, "h": 1 }, "collapsed": false },
+
+    {
+      "id": 40, "type": "stat", "title": "WebApp Req/s",
+      "gridPos": { "x": 0, "y": 37, "w": 3, "h": 3 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "decimals": 1, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum(rate(http_requests_total{job=\"coderz-webapp\"}[1m]))", "refId": "A" }]
+    },
+
+    {
+      "id": 41, "type": "stat", "title": "WebApp Error Rate",
+      "gridPos": { "x": 3, "y": 37, "w": 3, "h": 3 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "none", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "100 * sum(rate(http_requests_total{job=\"coderz-webapp\", status_code=~\"[45]..\"}[1m])) / sum(rate(http_requests_total{job=\"coderz-webapp\"}[1m]))", "refId": "A" }]
+    },
+
+    {
+      "id": 42, "type": "timeseries", "title": "WebApp Request Rate by Endpoint (req/s)",
+      "gridPos": { "x": 6, "y": 37, "w": 10, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] } },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 5 } } },
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum by (endpoint, method) (rate(http_requests_total{job=\"coderz-webapp\", endpoint!=\"/metrics\"}[1m]))", "legendFormat": "{{method}} {{endpoint}}", "refId": "A" }]
+    },
+
+    {
+      "id": 43, "type": "table", "title": "WebApp Endpoint Error Table",
+      "gridPos": { "x": 16, "y": 37, "w": 8, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "sortBy": [{ "desc": true, "displayName": "Errors/min" }] },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Errors/min" }, "properties": [{ "id": "unit", "value": "short" }, { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } }, { "id": "custom.displayMode", "value": "color-background" }] }
+        ]
+      },
+      "transformations": [
+        { "id": "merge", "options": {} },
+        { "id": "organize", "options": { "renameByName": { "endpoint": "Endpoint", "method": "Method", "status_code": "Status", "Value #A": "Errors/min" } } }
+      ],
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "sum by (endpoint, method, status_code) (rate(http_requests_total{job=\"coderz-webapp\", status_code=~\"[45]..\", endpoint!=\"/metrics\"}[1m])) * 60", "legendFormat": "{{endpoint}}", "refId": "A", "instant": true, "format": "table" }]
+    },
+
+    { "id": 1005, "type": "row", "title": "Live Error Logs — Find the Issue Instantly", "gridPos": { "x": 0, "y": 44, "w": 24, "h": 1 }, "collapsed": false },
+
+    {
+      "id": 50, "type": "logs", "title": ".NET API — Error & Warning Logs (Live)",
+      "description": "Live log stream from the .NET API container — shows errors with full stack traces",
+      "gridPos": { "x": 0, "y": 45, "w": 14, "h": 10 },
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+      "targets": [{ "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }, "expr": "{container=\"coderz-dotnet-api\"} |~ `(?i)(error|exception|fail|warn|critical|500|400)`", "legendFormat": "", "refId": "A" }]
+    },
+
+    {
+      "id": 51, "type": "logs", "title": "WebApp — Error & Warning Logs (Live)",
+      "description": "Live log stream from the WebApp container",
+      "gridPos": { "x": 14, "y": 45, "w": 10, "h": 10 },
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+      "targets": [{ "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" }, "expr": "{container=\"coderz-webapp\"} |~ `(?i)(error|exception|fail|warn|critical|500|400)`", "legendFormat": "", "refId": "A" }]
+    },
+
+    { "id": 1006, "type": "row", "title": "Latency Analysis — Slow Requests", "gridPos": { "x": 0, "y": 55, "w": 24, "h": 1 }, "collapsed": false },
+
+    {
+      "id": 60, "type": "timeseries", "title": ".NET Latency Percentiles Over Time",
+      "description": "P50 / P95 / P99 latency trend — rising P99 = slow outlier requests",
+      "gridPos": { "x": 0, "y": 56, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "tooltip": { "mode": "multi", "sort": "none" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "lineWidth": 2 } } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"coderz-dotnet-api\"}[5m])) by (le))", "legendFormat": "P50 (median)", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"coderz-dotnet-api\"}[5m])) by (le))", "legendFormat": "P95", "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{job=\"coderz-dotnet-api\"}[5m])) by (le))", "legendFormat": "P99", "refId": "C" }
+      ]
+    },
+
+    {
+      "id": 61, "type": "timeseries", "title": "Gateway Latency Percentiles (APISIX)",
+      "description": "End-to-end latency as seen by the client at the gateway",
+      "gridPos": { "x": 12, "y": 56, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "options": { "tooltip": { "mode": "multi", "sort": "none" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "lineWidth": 2 } } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.50, sum(rate(apisix_http_latency_bucket{job=\"apisix-gateway\", type=\"apisix\"}[5m])) by (le))", "legendFormat": "P50 (median)", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.95, sum(rate(apisix_http_latency_bucket{job=\"apisix-gateway\", type=\"apisix\"}[5m])) by (le))", "legendFormat": "P95", "refId": "B" },
+        { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "expr": "histogram_quantile(0.99, sum(rate(apisix_http_latency_bucket{job=\"apisix-gateway\", type=\"apisix\"}[5m])) by (le))", "legendFormat": "P99", "refId": "C" }
+      ]
+    }
+
+  ]
+}
