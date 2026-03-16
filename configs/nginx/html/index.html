@@ -324,6 +324,9 @@
     <span class="live-dot"></span>
     All services online · 109.199.120.120
   </div>
+  <div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:18px;padding:3px 12px;border-radius:20px;border:1px solid rgba(63,185,80,0.3);background:rgba(63,185,80,0.07);font-size:0.72rem;color:var(--muted);">
+    ✏️ Last updated: March 16, 2026
+  </div>
   <h1>Coderz Infrastructure<br>Stack</h1>
   <p>A fully self-hosted, production-grade platform — API gateway, observability, logging, orchestration, and Kubernetes in one place.</p>
   <div class="hero-actions">
@@ -334,7 +337,7 @@
 
   <div class="stats-bar">
     <div class="stat">
-      <div class="stat-val">22+</div>
+      <div class="stat-val">23+</div>
       <div class="stat-label">Services</div>
     </div>
     <div class="stat">
@@ -367,6 +370,7 @@
     <a href="http://109.199.120.120:5080" target="_blank"><span>🗄</span> pgAdmin</a>
     <a href="http://109.199.120.120:5200/swagger" target="_blank"><span>🛒</span> eShop API</a>
     <a href="http://109.199.120.120:9090" target="_blank"><span>📈</span> Prometheus</a>
+    <a href="http://109.199.120.120:16686" target="_blank"><span>🔭</span> Jaeger</a>
     <a href="http://109.199.120.120:30180/apisix/admin/routes" target="_blank"><span>🔧</span> Admin API</a>
   </div>
 
@@ -471,7 +475,7 @@
     <div class="section-head">
       <div class="section-icon" style="--section-bg:rgba(240,136,62,0.12)">📊</div>
       <span class="section-title">Monitoring &amp; Metrics</span>
-      <span class="section-count">5 services</span>
+      <span class="section-count">6 services</span>
     </div>
     <div class="grid">
 
@@ -535,6 +539,19 @@
         </div>
         <div class="card-desc">Active health checks for all 33 services — HTTP, TCP, CPU, RAM, Disk. Instant red/green status.</div>
         <div class="card-cred">admin / coderz123</div>
+      </a>
+
+      <a class="card" href="http://109.199.120.120:16686" target="_blank"
+         style="--card-accent:#60d0e4; --card-icon-bg:rgba(96,208,228,0.1)">
+        <span class="badge-tag tag-new">New</span>
+        <div class="card-top">
+          <div class="card-emoji">🔭</div>
+          <div class="card-meta">
+            <div class="card-name">Jaeger</div>
+            <div class="card-port">:16686</div>
+          </div>
+        </div>
+        <div class="card-desc">Distributed tracing UI — trace .NET API requests end-to-end, view spans, latency breakdowns, and service dependencies.</div>
       </a>
 
     </div>
@@ -885,7 +902,7 @@
     <a href="https://github.com/AbdullahMohmmed95/coderz-stack" target="_blank">⑂ GitHub — coderz-stack</a>
     <a href="https://github.com/AbdullahMohmmed95/coderz-docs" target="_blank">⑂ GitHub — coderz-docs</a>
   </div>
-  <p>Coderz Stack · Self-hosted on <strong>109.199.120.120</strong> · Managed with Docker Compose + k3s</p>
+  <p>Coderz Stack · Self-hosted on <strong>109.199.120.120</strong> · Managed with Docker Compose + k3s · Last updated: March 16, 2026</p>
 </footer>
 
 </body>
